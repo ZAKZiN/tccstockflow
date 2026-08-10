@@ -1,0 +1,14 @@
+{
+    "name": "tcc/stockflow",
+    "description": "Sistema de Controle de Requisicoes, Compras e Estoque",
+    "type": "project",
+    "require": {
+        "bramus/router": "~1.6",
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    }
+}
