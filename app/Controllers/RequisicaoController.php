@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\Requisicao;
+use App\Models\Notificacao;
 
 class RequisicaoController extends Controller {
     
@@ -54,6 +55,15 @@ class RequisicaoController extends Controller {
             ];
             
             Requisicao::create($dados);
+            
+            // Notificar Coordenador
+            Notificacao::create(
+                "Nova Requisição: {$_POST['material']}", 
+                "{$_SESSION['usuario_nome']} solicitou {$_POST['quantidade']} unidade(s).",
+                null, 
+                'Coordenador'
+            );
+            
             $this->redirect('/requisicoes');
         }
         
@@ -67,6 +77,14 @@ class RequisicaoController extends Controller {
         
         // Passa para o próximo status
         Requisicao::updateStatus($id, 'Pendente Almoxarifado');
+        
+        Notificacao::create(
+            "Requisição Aprovada", 
+            "A requisição #{$id} foi aprovada e enviada ao Almoxarifado.",
+            null, 
+            'Almoxarife'
+        );
+        
         $this->redirect('/requisicoes');
     }
 
@@ -76,6 +94,12 @@ class RequisicaoController extends Controller {
         }
         
         Requisicao::updateStatus($id, 'Recusado');
+        Notificacao::create(
+            "Requisição Recusada", 
+            "A requisição #{$id} foi recusada pelo Coordenador.",
+            null, 
+            'Solicitante'
+        );
         $this->redirect('/requisicoes');
     }
 }

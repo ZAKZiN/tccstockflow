@@ -157,5 +157,6 @@
             }
         });
     </script>
+<script src="/js/notifications.js"></script>
 </body>
 </html>

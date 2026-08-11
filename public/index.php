@@ -34,6 +34,7 @@ use App\Controllers\RequisicaoController;
 use App\Controllers\EstoqueController;
 use App\Controllers\FornecedorController;
 use App\Controllers\CompraController;
+use App\Controllers\NotificacaoController;
 
 // Dashboard
 $router->get('/dashboard', DashboardController::class . '@index');
@@ -55,6 +56,10 @@ $router->post('/fornecedores', FornecedorController::class . '@index');
 // Compras
 $router->get('/compras', CompraController::class . '@index');
 $router->post('/compras', CompraController::class . '@index');
+
+// API Notificações
+$router->get('/api/notificacoes', NotificacaoController::class . '@getUnread');
+$router->post('/api/notificacoes/ler/(\d+)', NotificacaoController::class . '@markAsRead');
 
 // Dispara as rotas
 $router->run();

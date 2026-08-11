@@ -136,3 +136,14 @@ CREATE TRIGGER trigger_audit_produtos
     AFTER UPDATE ON produtos
     FOR EACH ROW
     EXECUTE FUNCTION log_estoque_changes();
+
+-- Tabela de Notificacoes In-App
+CREATE TABLE IF NOT EXISTS notificacoes (
+    id_notificacao SERIAL PRIMARY KEY,
+    id_usuario INT,
+    nivel_destino VARCHAR(50),
+    titulo VARCHAR(160) NOT NULL,
+    mensagem TEXT NOT NULL,
+    lida BOOLEAN DEFAULT FALSE,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

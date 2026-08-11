@@ -383,3 +383,17 @@ tr:hover { background-color: var(--bg-secondary); }
 .badge-success { background-color: var(--success-bg); color: var(--success); }
 .badge-warning { background-color: var(--warning-bg); color: var(--warning); }
 .badge-danger { background-color: var(--danger-bg); color: var(--danger); }
+
+/* === IMPRESSÃO PROFISSIONAL (PDF) === */
+@media print {
+    body { background-color: #fff; color: #000; }
+    .sidebar, .btn, #scanner-modal, .input-icon-wrapper { display: none !important; }
+    .main-content { padding: 0 !important; margin: 0 !important; width: 100% !important; }
+    .app-layout { display: block; }
+    .glass-panel { border: none !important; box-shadow: none !important; padding: 0 !important; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th { background-color: #f3f4f6 !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    th, td { border: 1px solid #d1d5db; padding: 8px; font-size: 10pt; }
+    .topbar h2::after { content: ' - Gerado em: ' attr(data-date); font-size: 10pt; font-weight: normal; color: #666; display: block; margin-top: 5px; }
+    @page { margin: 1.5cm; }
+}
