@@ -15,10 +15,11 @@ class Database {
             $db_name = $_ENV['DB_NAME'] ?? 'postgres';
             $username = $_ENV['DB_USER'] ?? 'postgres';
             $password = $_ENV['DB_PASS'] ?? '';
+            $sslmode = $_ENV['DB_SSLMODE'] ?? 'require';
 
             try {
                 // Configuração da string de conexão do PostgreSQL
-                $dsn = "pgsql:host={$host};port={$port};dbname={$db_name}";
+                $dsn = "pgsql:host={$host};port={$port};dbname={$db_name};sslmode={$sslmode}";
                 self::$instance = new PDO($dsn, $username, $password);
                 
                 // Configurando o PDO para lançar exceções em caso de erro
