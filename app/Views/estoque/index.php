@@ -6,50 +6,32 @@
     <title>StockFlow - Estoque</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <style>
-        .app-layout { display: flex; min-height: 100vh; }
-        .sidebar { width: 260px; background-color: var(--bg-secondary); border-right: 1px solid var(--border-color); padding: 1.5rem; display: flex; flex-direction: column; }
-        .sidebar-brand { font-size: 1.25rem; font-weight: 700; margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary); }
-        .sidebar-menu { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
-        .sidebar-menu a { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 8px; color: var(--text-secondary); text-decoration: none; transition: var(--transition); }
-        .sidebar-menu a:hover, .sidebar-menu a.active { background-color: rgba(59, 130, 246, 0.1); color: var(--accent-color); }
-        .main-content { flex: 1; padding: 2rem; overflow-y: auto; }
-        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-        
-        .table-container { overflow-x: auto; margin-top: 1.5rem; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 1rem; border-bottom: 1px solid var(--border-color); }
-        th { color: var(--text-secondary); font-weight: 600; font-size: 0.875rem; }
-        tr:hover { background-color: rgba(255,255,255,0.02); }
-        
-        .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
-        .status-ok { background-color: var(--success); }
-        .status-alert { background-color: var(--warning); }
-        .status-critical { background-color: var(--danger); }
-    </style>
 </head>
 <body>
 
     <div class="app-layout">
         <aside class="sidebar">
-            <div class="sidebar-brand">
+            <div class="sidebar-brand animate-fade-up">
                 <i class="ph ph-package"></i> StockFlow
             </div>
             <ul class="sidebar-menu">
-                <li><a href="/dashboard"><i class="ph ph-squares-four"></i> Dashboard</a></li>
-                <li><a href="/requisicoes"><i class="ph ph-file-text"></i> Requisições</a></li>
-                <li><a href="/estoque" class="active"><i class="ph ph-archive"></i> Estoque</a></li>
-                <li><a href="/logout"><i class="ph ph-sign-out"></i> Sair</a></li>
+                <li class="animate-fade-up delay-100"><a href="/dashboard"><i class="ph ph-squares-four"></i> Dashboard</a></li>
+                <li class="animate-fade-up delay-200"><a href="/requisicoes"><i class="ph ph-file-text"></i> Requisições</a></li>
+                <li class="animate-fade-up delay-300"><a href="/estoque" class="active"><i class="ph ph-archive"></i> Estoque</a></li>
+                <li class="animate-fade-up delay-400"><a href="/logout"><i class="ph ph-sign-out"></i> Sair</a></li>
             </ul>
         </aside>
 
         <main class="main-content">
-            <header class="topbar">
+            <header class="topbar animate-fade-up">
                 <h2>Controle de Estoque</h2>
-                <button class="btn btn-primary"><i class="ph ph-plus"></i> Cadastrar Produto</button>
+                <div style="display: flex; gap: 1rem;">
+                    <a href="?export=csv" class="btn" style="background-color: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-subtle);"><i class="ph ph-file-csv"></i> Exportar CSV</a>
+                    <button class="btn btn-primary"><i class="ph ph-plus"></i> Cadastrar Produto</button>
+                </div>
             </header>
 
-            <div class="glass-panel" style="padding: 1.5rem;">
+            <div class="glass-panel animate-fade-up delay-200" style="padding: 1.5rem;">
                 <div class="table-container">
                     <table>
                         <thead>
@@ -65,7 +47,7 @@
                         <tbody>
                             <?php if(empty($produtos)): ?>
                                 <tr>
-                                    <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                                    <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
                                         Nenhum produto cadastrado no estoque.
                                     </td>
                                 </tr>
@@ -73,21 +55,21 @@
                                 <?php foreach($produtos as $prod): ?>
                                     <tr>
                                         <td>#<?= str_pad($prod['id_produto'], 4, '0', STR_PAD_LEFT) ?></td>
-                                        <td><strong><?= htmlspecialchars($prod['nome_produto']) ?></strong></td>
+                                        <td style="font-weight: 500; color: var(--text-primary);"><?= htmlspecialchars($prod['nome_produto']) ?></td>
                                         <td><?= $prod['quantidade_estoque'] ?></td>
                                         <td><?= $prod['estoque_minimo'] ?></td>
                                         <td>
                                             <?php 
                                                 if ($prod['quantidade_estoque'] <= 0) {
-                                                    echo '<span class="status-dot status-critical"></span>Esgotado';
+                                                    echo '<span class="badge badge-danger">Esgotado</span>';
                                                 } elseif ($prod['quantidade_estoque'] <= $prod['estoque_minimo']) {
-                                                    echo '<span class="status-dot status-alert"></span>Crítico';
+                                                    echo '<span class="badge badge-warning">Crítico</span>';
                                                 } else {
-                                                    echo '<span class="status-dot status-ok"></span>Regular';
+                                                    echo '<span class="badge badge-success">Regular</span>';
                                                 }
                                             ?>
                                         </td>
-                                        <td><?= date('d/m/Y H:i', strtotime($prod['atualizado_em'])) ?></td>
+                                        <td style="color: var(--text-secondary);"><?= date('d/m/Y H:i', strtotime($prod['atualizado_em'])) ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>

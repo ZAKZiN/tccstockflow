@@ -16,14 +16,25 @@ class AuthController extends Controller {
 
     public function login() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Cibersegurança: Rate Limiting (Proteção contra Brute Force)
+            if (isset($_SESSION['login_attempts']) && $_SESSION['login_attempts'] >= 5) {
+                if (time() - $_SESSION['last_attempt_time'] < 60) {
+                    $this->view('auth/login', ['error' => 'Muitas tentativas falhas. Por segurança, aguarde 1 minuto.']);
+                    return;
+                } else {
+                    $_SESSION['login_attempts'] = 0;
+                }
+            }
+
             $login = $_POST['login'] ?? '';
             $senha = $_POST['senha'] ?? '';
             
             $user = Usuario::authenticate($login, $senha);
             
             if ($user) {
-                // Regenerar ID da sessão para prevenir Session Fixation
+                // Prevenção contra Session Fixation
                 session_regenerate_id(true);
+                $_SESSION['login_attempts'] = 0; // Reset
                 
                 $_SESSION['usuario_id'] = $user['id_usuario'];
                 $_SESSION['usuario_nome'] = $user['nome'];
@@ -33,6 +44,8 @@ class AuthController extends Controller {
                 
                 $this->redirect('/dashboard');
             } else {
+                $_SESSION['login_attempts'] = ($_SESSION['login_attempts'] ?? 0) + 1;
+                $_SESSION['last_attempt_time'] = time();
                 $this->view('auth/login', ['error' => 'Login ou senha incorretos.']);
             }
         }

@@ -4,14 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StockFlow - Acesso ao Sistema</title>
+    <!-- O caminho /css/style.css funciona bem no ambiente de produção e no dev se rodado da pasta public -->
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 <body>
 
     <div class="auth-container">
-        <div class="auth-box glass-panel">
-            <div class="auth-header">
+        <div class="auth-box glass-panel animate-scale">
+            <div class="auth-header animate-fade-up delay-100">
                 <h1>StockFlow</h1>
                 <p>Gestão de Requisições e Estoque</p>
             </div>
@@ -22,24 +23,24 @@
                 </div>
             <?php endif; ?>
 
-            <form action="/login" method="POST">
+            <form action="/login" method="POST" class="animate-fade-up delay-200">
                 <div class="input-group">
                     <label for="login">Usuário</label>
-                    <div style="position: relative;">
-                        <i class="ph ph-user" style="position: absolute; left: 12px; top: 12px; color: var(--text-secondary); font-size: 1.2rem;"></i>
-                        <input type="text" id="login" name="login" placeholder="Seu nome de usuário" required style="padding-left: 2.5rem; width: 100%;">
+                    <div class="input-icon-wrapper">
+                        <i class="ph ph-user"></i>
+                        <input type="text" id="login" name="login" placeholder="Seu nome de usuário" required>
                     </div>
                 </div>
                 
                 <div class="input-group">
                     <label for="senha">Senha</label>
-                    <div style="position: relative;">
-                        <i class="ph ph-lock-key" style="position: absolute; left: 12px; top: 12px; color: var(--text-secondary); font-size: 1.2rem;"></i>
-                        <input type="password" id="senha" name="senha" placeholder="Sua senha" required style="padding-left: 2.5rem; width: 100%;">
+                    <div class="input-icon-wrapper">
+                        <i class="ph ph-lock-key"></i>
+                        <input type="password" id="senha" name="senha" placeholder="Sua senha" required>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                <button type="submit" class="btn btn-primary animate-fade-up delay-300" style="width: 100%; margin-top: 1rem;">
                     Entrar no Sistema <i class="ph ph-sign-in"></i>
                 </button>
             </form>

@@ -6,125 +6,25 @@
     <title>StockFlow - Dashboard</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Layout Layout Styles for Dashboard */
-        .app-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-        
-        .sidebar {
-            width: 260px;
-            background-color: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .sidebar-brand {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-primary);
-        }
-        
-        .sidebar-menu {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        
-        .sidebar-menu a {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: var(--transition);
-        }
-        
-        .sidebar-menu a:hover, .sidebar-menu a.active {
-            background-color: rgba(59, 130, 246, 0.1);
-            color: var(--accent-color);
-        }
-        
-        .sidebar-menu a i { font-size: 1.25rem; }
-        
-        .main-content {
-            flex: 1;
-            padding: 2rem;
-            overflow-y: auto;
-        }
-        
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .avatar {
-            width: 40px;
-            height: 40px;
-            background-color: var(--accent-color);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-        }
-
-        /* Dashboard Cards */
-        .stats-grid {
+        .charts-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-template-columns: 2fr 1fr;
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
-        
-        .stat-card {
+        .chart-container {
             padding: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
+            border-radius: var(--border-radius);
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-soft);
         }
-        
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-        }
-        
-        .icon-blue { background-color: rgba(59, 130, 246, 0.2); color: var(--accent-color); }
-        .icon-yellow { background-color: rgba(245, 158, 11, 0.2); color: var(--warning); }
-        .icon-red { background-color: rgba(239, 68, 68, 0.2); color: var(--danger); }
-        
-        .stat-info h3 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-        }
-        
-        .stat-info p {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
+        .chart-header {
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
         }
     </style>
 </head>
@@ -133,28 +33,28 @@
     <div class="app-layout">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="sidebar-brand">
+            <div class="sidebar-brand animate-fade-up">
                 <i class="ph ph-package"></i> StockFlow
             </div>
             
             <ul class="sidebar-menu">
-                <li><a href="/dashboard" class="active"><i class="ph ph-squares-four"></i> Dashboard</a></li>
-                <li><a href="/requisicoes"><i class="ph ph-file-text"></i> Requisições</a></li>
+                <li class="animate-fade-up delay-100"><a href="/dashboard" class="active"><i class="ph ph-chart-pie-slice"></i> Dashboard</a></li>
+                <li class="animate-fade-up delay-200"><a href="/requisicoes"><i class="ph ph-file-text"></i> Requisições</a></li>
                 <?php if(in_array($_SESSION['usuario_nivel'], ['Almoxarife', 'Administrador'])): ?>
-                    <li><a href="/estoque"><i class="ph ph-archive"></i> Estoque</a></li>
+                    <li class="animate-fade-up delay-300"><a href="/estoque"><i class="ph ph-archive"></i> Estoque</a></li>
                 <?php endif; ?>
-                <li><a href="/logout"><i class="ph ph-sign-out"></i> Sair</a></li>
+                <li class="animate-fade-up delay-400"><a href="/logout"><i class="ph ph-sign-out"></i> Sair</a></li>
             </ul>
         </aside>
 
         <!-- Main Content -->
         <main class="main-content">
-            <header class="topbar">
+            <header class="topbar animate-fade-up">
                 <h2>Visão Geral</h2>
                 <div class="user-profile">
-                    <div class="user-info" style="text-align: right;">
+                    <div class="user-info">
                         <strong><?= htmlspecialchars($_SESSION['usuario_nome']) ?></strong>
-                        <div style="font-size: 0.75rem; color: var(--text-secondary);"><?= htmlspecialchars($_SESSION['usuario_nivel']) ?> - <?= htmlspecialchars($_SESSION['usuario_setor'] ?? '') ?></div>
+                        <span><?= htmlspecialchars($_SESSION['usuario_nivel']) ?> - <?= htmlspecialchars($_SESSION['usuario_setor'] ?? '') ?></span>
                     </div>
                     <div class="avatar">
                         <?= substr(htmlspecialchars($_SESSION['usuario_nome']), 0, 1) ?>
@@ -163,7 +63,7 @@
             </header>
 
             <div class="stats-grid">
-                <div class="stat-card glass-panel">
+                <div class="stat-card glass-panel animate-fade-up delay-100">
                     <div class="stat-icon icon-blue">
                         <i class="ph ph-file-text"></i>
                     </div>
@@ -173,7 +73,7 @@
                     </div>
                 </div>
                 
-                <div class="stat-card glass-panel">
+                <div class="stat-card glass-panel animate-fade-up delay-200">
                     <div class="stat-icon icon-yellow">
                         <i class="ph ph-clock"></i>
                     </div>
@@ -183,7 +83,7 @@
                     </div>
                 </div>
                 
-                <div class="stat-card glass-panel">
+                <div class="stat-card glass-panel animate-fade-up delay-300">
                     <div class="stat-icon icon-red">
                         <i class="ph ph-warning-circle"></i>
                     </div>
@@ -194,14 +94,68 @@
                 </div>
             </div>
             
-            <div class="glass-panel" style="padding: 1.5rem;">
-                <h3 style="margin-bottom: 1rem;">Bem-vindo(a) ao StockFlow</h3>
-                <p style="color: var(--text-secondary); line-height: 1.6;">
-                    Utilize o menu lateral para navegar pelas funcionalidades. Este painel permite o acompanhamento em tempo real das requisições e níveis de estoque da instituição.
-                </p>
+            <!-- Analytics Charts -->
+            <div class="charts-grid animate-fade-up delay-400">
+                <div class="chart-container">
+                    <div class="chart-header">Evolução de Requisições (Ano Atual)</div>
+                    <canvas id="lineChart" height="100"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">Demandas por Setor</div>
+                    <canvas id="doughnutChart" height="200"></canvas>
+                </div>
             </div>
+            
         </main>
     </div>
 
+    <script>
+        // Line Chart (Requisitions per Month)
+        const ctxLine = document.getElementById('lineChart').getContext('2d');
+        new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                datasets: [{
+                    label: 'Requisições',
+                    data: <?= $stats['chart_mensal'] ?>,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#e5e7eb' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Doughnut Chart (Requisitions per Sector)
+        const ctxDoughnut = document.getElementById('doughnutChart').getContext('2d');
+        new Chart(ctxDoughnut, {
+            type: 'doughnut',
+            data: {
+                labels: <?= $stats['chart_setores_labels'] ?>,
+                datasets: [{
+                    data: <?= $stats['chart_setores_data'] ?>,
+                    backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '70%',
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    </script>
 </body>
 </html>

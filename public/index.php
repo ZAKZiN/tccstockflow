@@ -32,6 +32,8 @@ $router->get('/logout', AuthController::class . '@logout');
 use App\Controllers\DashboardController;
 use App\Controllers\RequisicaoController;
 use App\Controllers\EstoqueController;
+use App\Controllers\FornecedorController;
+use App\Controllers\CompraController;
 
 // Dashboard
 $router->get('/dashboard', DashboardController::class . '@index');
@@ -45,6 +47,14 @@ $router->get('/requisicoes/recusar/(\d+)', RequisicaoController::class . '@rejec
 
 // Estoque
 $router->get('/estoque', EstoqueController::class . '@index');
+
+// Fornecedores
+$router->get('/fornecedores', FornecedorController::class . '@index');
+$router->post('/fornecedores', FornecedorController::class . '@index');
+
+// Compras
+$router->get('/compras', CompraController::class . '@index');
+$router->post('/compras', CompraController::class . '@index');
 
 // Dispara as rotas
 $router->run();

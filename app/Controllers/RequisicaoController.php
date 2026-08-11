@@ -22,6 +22,19 @@ class RequisicaoController extends Controller {
             $requisicoes = Requisicao::getAll();
         }
         
+        if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename=requisicoes_export.csv');
+            $output = fopen('php://output', 'w');
+            fputs($output, "\xEF\xBB\xBF");
+            fputcsv($output, ['ID', 'Material', 'Quantidade', 'Solicitante', 'Setor', 'Status', 'Data'], ';');
+            foreach ($requisicoes as $r) {
+                fputcsv($output, [$r['id_requisicao'], $r['material'], $r['quantidade'], $r['solicitante'], $r['nome_setor'], $r['status'], date('d/m/Y H:i', strtotime($r['data_solicitacao']))], ';');
+            }
+            fclose($output);
+            exit;
+        }
+        
         $this->view('requisicoes/index', ['requisicoes' => $requisicoes]);
     }
     

@@ -52,11 +52,21 @@ CREATE TABLE IF NOT EXISTS historico_requisicoes (
     FOREIGN KEY (id_requisicao) REFERENCES requisicoes(id_requisicao) ON DELETE CASCADE
 );
 
+-- Tabela de Fornecedores
+CREATE TABLE IF NOT EXISTS fornecedores (
+    id_fornecedor SERIAL PRIMARY KEY,
+    nome_fantasia VARCHAR(160) NOT NULL,
+    cnpj VARCHAR(20) UNIQUE,
+    email VARCHAR(120),
+    telefone VARCHAR(20),
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Tabela de Compras
 CREATE TABLE IF NOT EXISTS compras (
     id_compra SERIAL PRIMARY KEY,
     id_requisicao INT NOT NULL,
-    fornecedor VARCHAR(120),
+    id_fornecedor INT REFERENCES fornecedores(id_fornecedor) ON DELETE SET NULL,
     valor_total DECIMAL(10,2),
     data_compra TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_requisicao) REFERENCES requisicoes(id_requisicao) ON DELETE CASCADE
@@ -96,6 +106,33 @@ CREATE TRIGGER update_requisicoes_modtime
 INSERT INTO setores (nome_setor) VALUES ('TI'), ('Administrativo'), ('Pedagógico') ON CONFLICT DO NOTHING;
 
 -- Inserindo Admin Padrao (senha: admin123 -> o hash deve ser gerado pelo password_hash, provisoriamente inserindo um hash valido)
--- Hash de 'admin123' gerado via BCRYPT: $2y$10$w0uQJ6l1/bZ91.O8eFq1gOe71nXY.zQ4Qj3oE5.uG/XoI7f0PZ7j2
+-- Hash de 'admin123' gerado via BCRYPT
 INSERT INTO usuarios (nome, login, senha, nivel_acesso, id_setor) 
-VALUES ('Administrador Master', 'admin', '$2y$10$w0uQJ6l1/bZ91.O8eFq1gOe71nXY.zQ4Qj3oE5.uG/XoI7f0PZ7j2', 'Administrador', 1) ON CONFLICT DO NOTHING;
+VALUES ('Administrador Master', 'admin', '$2y$12$.HfR4mloLrGDIO8RP4tcvu1f16ZOxa1XBvgAs6eJm80WQTq0Mxjna', 'Administrador', 1) ON CONFLICT DO NOTHING;
+
+-- Tabela de Logs de Auditoria (Cibersegurança)
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id_audit SERIAL PRIMARY KEY,
+    tabela_afetada VARCHAR(50) NOT NULL,
+    id_registro INT NOT NULL,
+    acao VARCHAR(50) NOT NULL,
+    detalhes TEXT,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE OR REPLACE FUNCTION log_estoque_changes() RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.quantidade_estoque <> OLD.quantidade_estoque THEN
+        INSERT INTO audit_logs (tabela_afetada, id_registro, acao, detalhes)
+        VALUES ('produtos', NEW.id_produto, 'UPDATE_ESTOQUE', 
+                'Estoque alterado de ' || OLD.quantidade_estoque || ' para ' || NEW.quantidade_estoque);
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_audit_produtos ON produtos;
+CREATE TRIGGER trigger_audit_produtos
+    AFTER UPDATE ON produtos
+    FOR EACH ROW
+    EXECUTE FUNCTION log_estoque_changes();
