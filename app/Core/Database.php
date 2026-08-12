@@ -18,9 +18,9 @@ class Database {
             $sslmode = $_ENV['DB_SSLMODE'] ?? 'require';
 
             try {
-                // Configuração da string de conexão do PostgreSQL
-                $dsn = "pgsql:host={$host};port={$port};dbname={$db_name};sslmode={$sslmode}";
-                self::$instance = new PDO($dsn, $username, $password);
+                // Configuração da string de conexão para SQLite Local
+                $dsn = 'sqlite:' . __DIR__ . '/../../database.sqlite';
+                self::$instance = new PDO($dsn);
                 
                 // Configurando o PDO para lançar exceções em caso de erro
                 self::$instance->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
