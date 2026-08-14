@@ -397,3 +397,15 @@ tr:hover { background-color: var(--bg-secondary); }
     .topbar h2::after { content: ' - Gerado em: ' attr(data-date); font-size: 10pt; font-weight: normal; color: #666; display: block; margin-top: 5px; }
     @page { margin: 1.5cm; }
 }
+
+/* === RESPONSIVIDADE (Tablets e Mobile) === */
+@media (max-width: 768px) {
+    .app-layout { flex-direction: column; }
+    .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-subtle); padding: 1rem; }
+    .sidebar-brand { margin-bottom: 1rem; }
+    .sidebar-menu { flex-direction: row; flex-wrap: wrap; justify-content: space-around; gap: 0.5rem; }
+    .sidebar-menu a { padding: 0.5rem; font-size: 0.85rem; flex-direction: column; gap: 0.25rem; text-align: center; }
+    .sidebar-menu a i { font-size: 1.5rem; }
+    .main-content { padding: 1rem; }
+    .topbar { flex-direction: column; align-items: flex-start; gap: 1rem; }
+}

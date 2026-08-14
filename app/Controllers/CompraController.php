@@ -9,7 +9,7 @@ use PDO;
 class CompraController extends Controller {
     
     public function index() {
-        if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['usuario_nivel'], ['Almoxarife', 'Administrador'])) {
+        if (!isset($_SESSION['usuario_id'])) {
             $this->redirect('/dashboard');
         }
         
@@ -22,13 +22,22 @@ class CompraController extends Controller {
             $valor_total = $_POST['valor_total'] ?? 0;
             
             if ($id_requisicao && $id_fornecedor) {
-                // Insert Compra
-                $stmt = $db->prepare("INSERT INTO compras (id_requisicao, id_fornecedor, valor_total) VALUES (?, ?, ?)");
-                $stmt->execute([$id_requisicao, $id_fornecedor, $valor_total]);
-                
-                // Update Requisicao Status to 'Compra Efetuada'
-                $stmtReq = $db->prepare("UPDATE requisicoes SET status = 'Compra Efetuada' WHERE id_requisicao = ?");
-                $stmtReq->execute([$id_requisicao]);
+                try {
+                    $db->beginTransaction();
+                    // Insert Compra
+                    $stmt = $db->prepare("INSERT INTO compras (id_requisicao, id_fornecedor, valor_total) VALUES (?, ?, ?)");
+                    $stmt->execute([$id_requisicao, $id_fornecedor, $valor_total]);
+                    
+                    // Update Requisicao Status to 'Compra Efetuada'
+                    $stmtReq = $db->prepare("UPDATE requisicoes SET status = 'Compra Efetuada' WHERE id_requisicao = ?");
+                    $stmtReq->execute([$id_requisicao]);
+                    $db->commit();
+                } catch (\Exception $e) {
+                    $db->rollBack();
+                    // Log the error securely and redirect with safe message
+                    $this->redirect('/compras?error=' . urlencode('Erro ao processar compra.'));
+                    return;
+                }
             }
             
             $this->redirect('/compras');

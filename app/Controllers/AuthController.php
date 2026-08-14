@@ -16,37 +16,50 @@ class AuthController extends Controller {
 
     public function login() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Cibersegurança: Rate Limiting (Proteção contra Brute Force)
-            if (isset($_SESSION['login_attempts']) && $_SESSION['login_attempts'] >= 5) {
-                if (time() - $_SESSION['last_attempt_time'] < 60) {
-                    $this->view('auth/login', ['error' => 'Muitas tentativas falhas. Por segurança, aguarde 1 minuto.']);
-                    return;
-                } else {
-                    $_SESSION['login_attempts'] = 0;
-                }
+            // Cibersegurança: Anti-Brute Force (Rate Limiting)
+            if (isset($_SESSION['lockout_time']) && time() < $_SESSION['lockout_time']) {
+                $wait_time = ceil(($_SESSION['lockout_time'] - time()) / 60);
+                header('Location: /?error=' . urlencode("Muitas tentativas falhas. Tente novamente em {$wait_time} minuto(s)."));
+                exit;
             }
 
             $login = $_POST['login'] ?? '';
             $senha = $_POST['senha'] ?? '';
             
-            $user = Usuario::authenticate($login, $senha);
+            $db = \App\Core\Database::getConnection();
             
-            if ($user) {
-                // Prevenção contra Session Fixation
-                session_regenerate_id(true);
-                $_SESSION['login_attempts'] = 0; // Reset
-                
+            $stmt = $db->prepare("SELECT * FROM usuarios WHERE login = ?");
+            $stmt->execute([$login]);
+            $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+            
+            if ($user && password_verify($senha, $user['senha'])) {
+                // Reset attempts on success
+                unset($_SESSION['login_attempts']);
+                unset($_SESSION['lockout_time']);
+
                 $_SESSION['usuario_id'] = $user['id_usuario'];
                 $_SESSION['usuario_nome'] = $user['nome'];
                 $_SESSION['usuario_nivel'] = $user['nivel_acesso'];
-                $_SESSION['usuario_setor'] = $user['nome_setor'];
-                $_SESSION['usuario_id_setor'] = $user['id_setor'];
                 
-                $this->redirect('/dashboard');
+                // Generate initial CSRF token if not exists
+                if (empty($_SESSION['csrf_token'])) {
+                    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                }
+                
+                header('Location: /dashboard');
+                exit;
             } else {
+                // Increment failed attempts
                 $_SESSION['login_attempts'] = ($_SESSION['login_attempts'] ?? 0) + 1;
-                $_SESSION['last_attempt_time'] = time();
-                $this->view('auth/login', ['error' => 'Login ou senha incorretos.']);
+                
+                if ($_SESSION['login_attempts'] >= 5) {
+                    $_SESSION['lockout_time'] = time() + (5 * 60); // 5 minutes lockout
+                    header('Location: /?error=' . urlencode('Muitas tentativas falhas. Conta bloqueada por 5 minutos por segurança.'));
+                    exit;
+                }
+
+                header('Location: /?error=Credenciais inválidas');
+                exit;
             }
         }
     }

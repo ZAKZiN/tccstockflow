@@ -1,32 +1,5 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockFlow - Requisições</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-</head>
-<body>
+<?php include __DIR__ . '/../layouts/header.php'; ?>
 
-    <div class="app-layout">
-        <aside class="sidebar">
-            <div class="sidebar-brand animate-fade-up">
-                <i class="ph ph-package"></i> StockFlow
-            </div>
-            <ul class="sidebar-menu">
-                <li class="animate-fade-up delay-100"><a href="/dashboard"><i class="ph ph-chart-pie-slice"></i> Dashboard</a></li>
-                <li class="animate-fade-up delay-200"><a href="/requisicoes" class="active"><i class="ph ph-file-text"></i> Requisições</a></li>
-                <?php if(in_array($_SESSION['usuario_nivel'], ['Almoxarife', 'Administrador'])): ?>
-                    <li class="animate-fade-up delay-300"><a href="/estoque"><i class="ph ph-archive"></i> Estoque</a></li>
-                    <li class="animate-fade-up delay-400"><a href="/fornecedores"><i class="ph ph-truck"></i> Fornecedores</a></li>
-                    <li class="animate-fade-up delay-400"><a href="/compras"><i class="ph ph-shopping-cart"></i> Compras</a></li>
-                <?php endif; ?>
-                <li class="animate-fade-up delay-400"><a href="/logout"><i class="ph ph-sign-out"></i> Sair</a></li>
-            </ul>
-        </aside>
-
-        <main class="main-content">
             <header class="topbar animate-fade-up">
                 <h2>Gestão de Requisições</h2>
                 <div style="display: flex; gap: 1rem;">
@@ -89,13 +62,10 @@
                     </table>
                 </div>
             </div>
-        </main>
-    </div>
-    <script src="/js/notifications.js"></script>
     <script>
         // Data para a impressão
         const dateStr = new Date().toLocaleString('pt-BR');
         document.querySelector('.topbar h2').setAttribute('data-date', dateStr);
     </script>
-</body>
-</html>
+
+<?php include __DIR__ . '/../layouts/footer.php'; ?>

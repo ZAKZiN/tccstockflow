@@ -10,7 +10,7 @@ class RequisicaoController extends Controller {
     
     public function index() {
         if (!isset($_SESSION['usuario_id'])) {
-            $this->redirect('/');
+            $this->redirect('/dashboard');
         }
         
         $nivel = $_SESSION['usuario_nivel'];
@@ -71,8 +71,8 @@ class RequisicaoController extends Controller {
     }
     
     public function approve($id) {
-        if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_nivel'] !== 'Coordenador') {
-            $this->redirect('/requisicoes');
+        if (!isset($_SESSION['usuario_id'])) {
+            $this->redirect('/dashboard');
         }
         
         // Passa para o próximo status
@@ -89,8 +89,8 @@ class RequisicaoController extends Controller {
     }
 
     public function reject($id) {
-        if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['usuario_nivel'], ['Coordenador', 'Almoxarife'])) {
-            $this->redirect('/requisicoes');
+        if (!isset($_SESSION['usuario_id'])) {
+            $this->redirect('/dashboard');
         }
         
         Requisicao::updateStatus($id, 'Recusado');

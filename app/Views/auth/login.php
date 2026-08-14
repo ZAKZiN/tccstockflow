@@ -24,6 +24,7 @@
             <?php endif; ?>
 
             <form action="/login" method="POST" class="animate-fade-up delay-200">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                 <div class="input-group">
                     <label for="login">Usuário</label>
                     <div class="input-icon-wrapper">

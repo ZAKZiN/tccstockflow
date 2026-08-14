@@ -9,7 +9,7 @@ use PDO;
 class FornecedorController extends Controller {
     
     public function index() {
-        if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['usuario_nivel'], ['Almoxarife', 'Administrador'])) {
+        if (!isset($_SESSION['usuario_id'])) {
             $this->redirect('/dashboard');
         }
         
