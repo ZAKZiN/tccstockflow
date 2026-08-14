@@ -2,7 +2,7 @@
     "version": 2,
     "functions": {
         "public/index.php": {
-            "runtime": "vercel-php@0.6.2"
+            "runtime": "vercel-community/php@0.3.5"
         }
     },
     "routes": [
