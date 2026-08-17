@@ -1,8 +1,7 @@
 services:
   - type: web
     name: tcc-stockflow
-    env: php
-    buildCommand: composer install
+    env: docker
     envVars:
       - key: DOCUMENT_ROOT
         value: public
