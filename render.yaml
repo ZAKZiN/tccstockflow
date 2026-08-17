@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: tcc-stockflow
+    env: php
+    buildCommand: composer install
+    runCommand: php -S 0.0.0.0:$PORT -t public
+    envVars:
+      - key: DB_HOST
+        value: db.cvakzvhqfgccjwohmmjh.supabase.co
+      - key: DB_PORT
+        value: 5432
+      - key: DB_NAME
+        value: postgres
+      - key: DB_USER
+        value: postgres
+      - key: DB_PASS
+        sync: false
+      - key: DB_SSLMODE
+        value: require
