@@ -3,12 +3,13 @@ FROM php:8.2-apache
 # Habilitar mod_rewrite do Apache
 RUN a2enmod rewrite
 
-# Instalar dependências necessárias do sistema e extensões do PHP (incluindo Postgres para o Supabase)
+# Instalar dependências necessárias do sistema e extensões do PHP (incluindo SQLite)
 RUN apt-get update && apt-get install -y \
-    libpq-dev \
+    sqlite3 \
+    libsqlite3-dev \
     git \
     unzip \
-    && docker-php-ext-install pdo pdo_pgsql
+    && docker-php-ext-install pdo pdo_sqlite
 
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -27,7 +28,7 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Ajustar permissões
-RUN chown -R www-data:www-data /var/www/html
+# Ajustar permissões para permitir escrita do SQLite no diretório
+RUN chown -R www-data:www-data /var/www/html && chmod -R 775 /var/www/html
 
 EXPOSE 80

@@ -5,33 +5,33 @@
 -- ATENÇÃO: Os comandos abaixo irão APAGAR todas as tabelas existentes
 -- para garantir que o banco seja recriado limpo e com as colunas corretas.
 -- =========================================================================
-DROP TABLE IF EXISTS audit_logs CASCADE;
-DROP TABLE IF EXISTS notificacoes CASCADE;
-DROP TABLE IF EXISTS compras CASCADE;
-DROP TABLE IF EXISTS fornecedores CASCADE;
-DROP TABLE IF EXISTS historico_requisicoes CASCADE;
-DROP TABLE IF EXISTS requisicoes CASCADE;
-DROP TABLE IF EXISTS movimentacoes_estoque CASCADE;
-DROP TABLE IF EXISTS caixa_movimentacoes CASCADE;
-DROP TABLE IF EXISTS caixas CASCADE;
-DROP TABLE IF EXISTS contas_receber CASCADE;
-DROP TABLE IF EXISTS vendas_itens CASCADE;
-DROP TABLE IF EXISTS vendas CASCADE;
-DROP TABLE IF EXISTS produtos CASCADE;
-DROP TABLE IF EXISTS categorias CASCADE;
-DROP TABLE IF EXISTS clientes CASCADE;
-DROP TABLE IF EXISTS usuarios CASCADE;
-DROP TABLE IF EXISTS setores CASCADE;
+DROP TABLE IF EXISTS audit_logs;
+DROP TABLE IF EXISTS notificacoes;
+DROP TABLE IF EXISTS compras;
+DROP TABLE IF EXISTS fornecedores;
+DROP TABLE IF EXISTS historico_requisicoes;
+DROP TABLE IF EXISTS requisicoes;
+DROP TABLE IF EXISTS movimentacoes_estoque;
+DROP TABLE IF EXISTS caixa_movimentacoes;
+DROP TABLE IF EXISTS caixas;
+DROP TABLE IF EXISTS contas_receber;
+DROP TABLE IF EXISTS vendas_itens;
+DROP TABLE IF EXISTS vendas;
+DROP TABLE IF EXISTS produtos;
+DROP TABLE IF EXISTS categorias;
+DROP TABLE IF EXISTS clientes;
+DROP TABLE IF EXISTS usuarios;
+DROP TABLE IF EXISTS setores;
 -- =========================================================================
 -- A tabela de Setores
 CREATE TABLE IF NOT EXISTS setores (
-    id_setor SERIAL PRIMARY KEY,
+    id_setor INTEGER PRIMARY KEY AUTOINCREMENT,
     nome_setor VARCHAR(80) NOT NULL UNIQUE
 );
 
 -- Tabela de Usuarios
 CREATE TABLE IF NOT EXISTS usuarios (
-    id_usuario SERIAL PRIMARY KEY,
+    id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
     nome VARCHAR(120) NOT NULL,
     login VARCHAR(60) NOT NULL UNIQUE,
     senha VARCHAR(255) NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 
 -- Tabela de Clientes
 CREATE TABLE IF NOT EXISTS clientes (
-    id_cliente SERIAL PRIMARY KEY,
+    id_cliente INTEGER PRIMARY KEY AUTOINCREMENT,
     nome VARCHAR(120) NOT NULL,
     telefone VARCHAR(20),
     email VARCHAR(120),
@@ -52,13 +52,13 @@ CREATE TABLE IF NOT EXISTS clientes (
 
 -- Tabela de Categorias
 CREATE TABLE IF NOT EXISTS categorias (
-    id_categoria SERIAL PRIMARY KEY,
+    id_categoria INTEGER PRIMARY KEY AUTOINCREMENT,
     nome_categoria VARCHAR(80) NOT NULL UNIQUE
 );
 
 -- Tabela de Produtos (Completa)
 CREATE TABLE IF NOT EXISTS produtos (
-    id_produto SERIAL PRIMARY KEY,
+    id_produto INTEGER PRIMARY KEY AUTOINCREMENT,
     nome_produto VARCHAR(160) NOT NULL,
     codigo_barras VARCHAR(100) UNIQUE,
     sku VARCHAR(100) UNIQUE,
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS produtos (
 
 -- Tabela de Vendas
 CREATE TABLE IF NOT EXISTS vendas (
-    id_venda SERIAL PRIMARY KEY,
+    id_venda INTEGER PRIMARY KEY AUTOINCREMENT,
     id_cliente INT,
     valor_total DECIMAL(10,2) NOT NULL,
     metodo_pagamento VARCHAR(50) NOT NULL,
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS vendas (
 
 -- Tabela de Itens da Venda
 CREATE TABLE IF NOT EXISTS vendas_itens (
-    id_venda_item SERIAL PRIMARY KEY,
+    id_venda_item INTEGER PRIMARY KEY AUTOINCREMENT,
     id_venda INT NOT NULL,
     id_produto INT NOT NULL,
     quantidade INT NOT NULL,
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS vendas_itens (
 
 -- Tabela de Contas a Receber (Fiado)
 CREATE TABLE IF NOT EXISTS contas_receber (
-    id_conta SERIAL PRIMARY KEY,
+    id_conta INTEGER PRIMARY KEY AUTOINCREMENT,
     id_venda INT NOT NULL,
     id_cliente INT NOT NULL,
     valor_total DECIMAL(10,2) NOT NULL,
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS contas_receber (
 
 -- Tabela de Caixas
 CREATE TABLE IF NOT EXISTS caixas (
-    id_caixa SERIAL PRIMARY KEY,
+    id_caixa INTEGER PRIMARY KEY AUTOINCREMENT,
     id_usuario INT NOT NULL,
     data_abertura TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     data_fechamento TIMESTAMP NULL,
@@ -123,7 +123,7 @@ CREATE TABLE IF NOT EXISTS caixas (
 
 -- Tabela de Movimentacoes do Caixa
 CREATE TABLE IF NOT EXISTS caixa_movimentacoes (
-    id_movimentacao SERIAL PRIMARY KEY,
+    id_movimentacao INTEGER PRIMARY KEY AUTOINCREMENT,
     id_caixa INT NOT NULL,
     tipo VARCHAR(50) NOT NULL,
     valor DECIMAL(10,2) NOT NULL,
@@ -134,7 +134,7 @@ CREATE TABLE IF NOT EXISTS caixa_movimentacoes (
 
 -- Tabela de Movimentacoes de Estoque (Kardex)
 CREATE TABLE IF NOT EXISTS movimentacoes_estoque (
-    id_movimentacao SERIAL PRIMARY KEY,
+    id_movimentacao INTEGER PRIMARY KEY AUTOINCREMENT,
     id_produto INT NOT NULL,
     id_usuario INT,
     tipo VARCHAR(50) NOT NULL,
@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS movimentacoes_estoque (
 
 -- Tabela de Requisicoes (Antiga / Interna)
 CREATE TABLE IF NOT EXISTS requisicoes (
-    id_requisicao SERIAL PRIMARY KEY,
+    id_requisicao INTEGER PRIMARY KEY AUTOINCREMENT,
     solicitante VARCHAR(120) NOT NULL,
     id_setor INT,
     material VARCHAR(160) NOT NULL,
@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS requisicoes (
 
 -- Tabela de Historico de Requisicoes
 CREATE TABLE IF NOT EXISTS historico_requisicoes (
-    id_historico SERIAL PRIMARY KEY,
+    id_historico INTEGER PRIMARY KEY AUTOINCREMENT,
     id_requisicao INT NOT NULL,
     acao VARCHAR(160) NOT NULL,
     responsavel VARCHAR(120) NOT NULL,
@@ -172,7 +172,7 @@ CREATE TABLE IF NOT EXISTS historico_requisicoes (
 
 -- Tabela de Fornecedores
 CREATE TABLE IF NOT EXISTS fornecedores (
-    id_fornecedor SERIAL PRIMARY KEY,
+    id_fornecedor INTEGER PRIMARY KEY AUTOINCREMENT,
     nome_fantasia VARCHAR(160) NOT NULL,
     cnpj VARCHAR(20) UNIQUE,
     email VARCHAR(120),
@@ -182,7 +182,7 @@ CREATE TABLE IF NOT EXISTS fornecedores (
 
 -- Tabela de Compras
 CREATE TABLE IF NOT EXISTS compras (
-    id_compra SERIAL PRIMARY KEY,
+    id_compra INTEGER PRIMARY KEY AUTOINCREMENT,
     id_requisicao INT NOT NULL,
     id_fornecedor INT REFERENCES fornecedores(id_fornecedor) ON DELETE SET NULL,
     valor_total DECIMAL(10,2),
@@ -192,7 +192,7 @@ CREATE TABLE IF NOT EXISTS compras (
 
 -- Tabela de Notificacoes In-App
 CREATE TABLE IF NOT EXISTS notificacoes (
-    id_notificacao SERIAL PRIMARY KEY,
+    id_notificacao INTEGER PRIMARY KEY AUTOINCREMENT,
     id_usuario INT,
     nivel_destino VARCHAR(50),
     titulo VARCHAR(160) NOT NULL,
@@ -203,7 +203,7 @@ CREATE TABLE IF NOT EXISTS notificacoes (
 
 -- Tabela de Logs de Auditoria (Cibersegurança)
 CREATE TABLE IF NOT EXISTS audit_logs (
-    id_audit SERIAL PRIMARY KEY,
+    id_audit INTEGER PRIMARY KEY AUTOINCREMENT,
     tabela_afetada VARCHAR(50) NOT NULL,
     id_registro INT NOT NULL,
     acao VARCHAR(50) NOT NULL,
@@ -212,45 +212,33 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 );
 
 -- Função e Trigger para atualizar o campo "atualizado_em" automaticamente
-CREATE OR REPLACE FUNCTION update_modified_column() 
-RETURNS TRIGGER AS $$
+
+
+
+-- Triggers SQLite para atualizacao de data
+CREATE TRIGGER IF NOT EXISTS update_produtos_modtime
+AFTER UPDATE ON produtos
+FOR EACH ROW
 BEGIN
-    NEW.atualizado_em = CURRENT_TIMESTAMP;
-    RETURN NEW; 
+    UPDATE produtos SET atualizado_em = CURRENT_TIMESTAMP WHERE id_produto = NEW.id_produto;
 END;
-$$ language 'plpgsql';
 
-DROP TRIGGER IF EXISTS update_produtos_modtime ON produtos;
-CREATE TRIGGER update_produtos_modtime
-    BEFORE UPDATE ON produtos
-    FOR EACH ROW
-    EXECUTE FUNCTION update_modified_column();
-
-DROP TRIGGER IF EXISTS update_requisicoes_modtime ON requisicoes;
-CREATE TRIGGER update_requisicoes_modtime
-    BEFORE UPDATE ON requisicoes
-    FOR EACH ROW
-    EXECUTE FUNCTION update_modified_column();
-
--- Função e Trigger para Auditoria do Estoque
-CREATE OR REPLACE FUNCTION log_estoque_changes() RETURNS TRIGGER AS $$
+CREATE TRIGGER IF NOT EXISTS update_requisicoes_modtime
+AFTER UPDATE ON requisicoes
+FOR EACH ROW
 BEGIN
-    IF NEW.quantidade_estoque <> OLD.quantidade_estoque THEN
-        INSERT INTO audit_logs (tabela_afetada, id_registro, acao, detalhes)
-        VALUES ('produtos', NEW.id_produto, 'UPDATE_ESTOQUE', 
-                'Estoque alterado de ' || OLD.quantidade_estoque || ' para ' || NEW.quantidade_estoque);
-    END IF;
-    RETURN NEW;
+    UPDATE requisicoes SET atualizado_em = CURRENT_TIMESTAMP WHERE id_requisicao = NEW.id_requisicao;
 END;
-$$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trigger_audit_produtos ON produtos;
-CREATE TRIGGER trigger_audit_produtos
-    AFTER UPDATE ON produtos
-    FOR EACH ROW
-    EXECUTE FUNCTION log_estoque_changes();
-
--- Inserindo Dados Iniciais Básicos (Setores e Admin)
+CREATE TRIGGER IF NOT EXISTS trigger_audit_produtos
+AFTER UPDATE ON produtos
+FOR EACH ROW
+WHEN NEW.quantidade_estoque <> OLD.quantidade_estoque
+BEGIN
+    INSERT INTO audit_logs (tabela_afetada, id_registro, acao, detalhes)
+    VALUES ('produtos', NEW.id_produto, 'UPDATE_ESTOQUE', 
+            'Estoque alterado de ' || OLD.quantidade_estoque || ' para ' || NEW.quantidade_estoque);
+END;
 INSERT INTO setores (nome_setor) VALUES ('Administrativo'), ('Caixa'), ('Estoque') ON CONFLICT DO NOTHING;
 
 -- Hash de 'admin123' gerado via BCRYPT
