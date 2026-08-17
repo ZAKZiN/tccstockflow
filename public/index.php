@@ -1,13 +1,19 @@
 <?php
 
 // Cibersegurança e LGPD: Configuração Segura de Sessões
+$isSecure = false;
+if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+    $isSecure = true;
+} elseif (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+    $isSecure = true;
+}
+
 session_set_cookie_params([
     'lifetime' => 86400,
     'path' => '/',
-    'domain' => '',
-    'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on', // Apenas HTTPS se disponível
-    'httponly' => true, // Previne roubo de sessão via XSS
-    'samesite' => 'Strict' // Previne CSRF cross-origin
+    'secure' => $isSecure, // Detecta HTTPS real ou atrás de Proxy (Render)
+    'httponly' => true,
+    'samesite' => 'Lax' // Melhor compatibilidade do que Strict
 ]);
 session_start();
 
