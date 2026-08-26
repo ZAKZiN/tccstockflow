@@ -9,11 +9,13 @@
     <div class="col-md-7">
         <div class="card mb-4 shadow-sm">
             <div class="card-body">
-                <div class="input-group mb-3">
-                    <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
-                    <input type="text" id="codigoBusca" class="form-control form-control-lg" placeholder="Código de barras ou Nome do Produto..." autofocus>
-                    <button class="btn btn-outline-secondary" type="button" id="btnScanner" data-bs-toggle="modal" data-bs-target="#scannerModal">
-                        <i class="bi bi-camera"></i> Câmera
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                    <div class="input-icon-wrapper" style="flex: 1; min-width: 250px;">
+                        <i class="ph ph-barcode"></i>
+                        <input type="text" id="codigoBusca" class="form-control" placeholder="Código de barras ou Nome do Produto..." autofocus style="width: 100%;">
+                    </div>
+                    <button class="btn" type="button" id="btnScanner" data-bs-toggle="modal" data-bs-target="#scannerModal" style="background-color: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-subtle); padding: 0.8rem 1.5rem; display: flex; align-items: center; gap: 0.5rem; justify-content: center;">
+                        <i class="ph ph-camera" style="font-size: 1.2rem;"></i> Câmera
                     </button>
                 </div>
                 <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
