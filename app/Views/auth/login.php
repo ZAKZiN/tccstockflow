@@ -25,6 +25,12 @@
 
             <form action="/login" method="POST" class="animate-fade-up delay-200">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                
+                <!-- Cibersegurança: Bot Protection (Honeypot) - Item 13 -->
+                <div style="display:none;" aria-hidden="true">
+                    <input type="text" name="website" tabindex="-1" autocomplete="off">
+                </div>
+                
                 <div class="input-group">
                     <label for="login">Usuário</label>
                     <div class="input-icon-wrapper">

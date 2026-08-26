@@ -1,5 +1,10 @@
 <?php
 
+// Cibersegurança: Prevenir vazamento de dados de erros internos (Item 15)
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+
+
 // Cibersegurança e LGPD: Configuração Segura de Sessões
 $isSecure = false;
 if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
@@ -22,11 +27,18 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
+// Cibersegurança: Forçar HTTPS em produção (Item 19)
+if (!$isSecure && (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'production' || getenv('RENDER'))) {
+    header("Location: https://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
+    exit();
+}
+
 // Cibersegurança: Cabeçalhos HTTP Seguros
 header("X-Frame-Options: SAMEORIGIN"); // Previne Clickjacking
 header("X-XSS-Protection: 1; mode=block"); // Proteção anti-XSS do navegador
 header("X-Content-Type-Options: nosniff"); // Impede MIME-sniffing
 header("Referrer-Policy: strict-origin-when-cross-origin");
+header("Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; img-src 'self' data: https:; font-src 'self' data: https://cdn.jsdelivr.net;"); // Item 18
 
 // Carrega o autoloader do Composer
 require_once __DIR__ . '/../vendor/autoload.php';

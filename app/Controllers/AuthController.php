@@ -23,6 +23,13 @@ class AuthController extends Controller {
                 exit;
             }
 
+            // Cibersegurança: Validação de Honeypot (Item 13)
+            if (!empty($_POST['website'])) {
+                // É um robô! Fingimos que falhou ou simplesmente ignoramos
+                header('Location: /?error=Credenciais inválidas');
+                exit;
+            }
+
             $login = $_POST['login'] ?? '';
             $senha = $_POST['senha'] ?? '';
             
