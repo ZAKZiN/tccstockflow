@@ -1,8 +1,8 @@
-# 📦 StockFlow - Gestão Comercial e de Estoque
+# StockFlow - Gestão Comercial e de Estoque
 
 StockFlow é um sistema completo de gestão de estoque, controle de requisições, e frente de caixa (PDV) desenvolvido em PHP moderno.
 
-## 🚀 Funcionalidades Principais
+## Funcionalidades Principais
 
 - **Frente de Caixa (PDV):** Interface moderna e responsiva para lançamento rápido de vendas, suporte a códigos de barra (via teclado ou leitor ótico) e integração nativa com o módulo de estoque.
 - **Gestão de Estoque:** Controle rígido de produtos com log de movimentações (Kardex), suporte a inventário e baixa automática nas vendas.
@@ -10,7 +10,7 @@ StockFlow é um sistema completo de gestão de estoque, controle de requisiçõe
 - **Controle Financeiro e de Caixa:** Abertura e fechamento de turnos diários (Caixa), registro de sangrias e suprimentos, além de módulo de gestão de clientes "Fiado" (Contas a Receber).
 - **Controle de Acessos (RBAC):** Níveis de acesso bem definidos (Administrador, Gerente, Operador de Caixa, Estoquista) garantindo que cada usuário visualize apenas as ferramentas de seu cargo.
 
-## 🛡️ Segurança e LGPD
+## Segurança e LGPD
 
 Este projeto foi construído seguindo rigorosos padrões de segurança da informação, protegendo os dados de acordo com os princípios da **Lei Geral de Proteção de Dados (LGPD)** e cobrindo diversas vulnerabilidades do padrão OWASP:
 
@@ -22,14 +22,14 @@ Este projeto foi construído seguindo rigorosos padrões de segurança da inform
 - **Sessões e Cookies Blindados:** Emissão de cookies puramente Server-Side, demarcados como `Secure` e `HttpOnly`, tornando o sequestro de sessões viabilizado por scripts de clientes impossível.
 - **Row Level Security (RLS) Database:** Políticas restritas instaladas diretamente na infraestrutura em Nuvem (Supabase / PostgreSQL) garantindo que tentativas externas (APIs públicas) sejam rigorosamente negadas.
 
-## 🛠️ Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 - **Linguagem:** PHP 8+
 - **Banco de Dados:** PostgreSQL (Hospedado no Supabase)
 - **Frontend:** HTML5, CSS Nativo Moderno (Design System Próprio com suporte a CSS Variables e Flexbox/Grid), Bootstrap (auxiliar), e Phosphor Icons.
 - **Infraestrutura:** Deploy Contínuo configurado na plataforma **Render**, garantindo escalabilidade e forçamento de conexões criptografadas (HTTPS).
 
-## 📄 Como Rodar o Projeto Localmente
+## Como Rodar o Projeto Localmente
 
 1. Clone o repositório.
 2. Certifique-se de possuir o PHP instalado na máquina (versão >= 8.1).
