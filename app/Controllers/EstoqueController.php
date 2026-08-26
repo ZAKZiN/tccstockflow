@@ -105,4 +105,27 @@ class EstoqueController extends Controller {
             $this->redirect('/estoque/historico/' . $idProduto);
         }
     }
+    public function store() {
+        if (!isset($_SESSION['usuario_id'])) {
+            $this->redirect('/dashboard');
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $dados = [
+                'nome_produto' => $_POST['nome_produto'] ?? '',
+                'codigo_barras' => !empty($_POST['codigo_barras']) ? $_POST['codigo_barras'] : null,
+                'sku' => null,
+                'id_categoria' => !empty($_POST['id_categoria']) ? $_POST['id_categoria'] : null,
+                'preco_custo' => !empty($_POST['preco_custo']) ? $_POST['preco_custo'] : 0,
+                'preco_venda' => !empty($_POST['preco_venda']) ? $_POST['preco_venda'] : 0,
+                'quantidade_estoque' => 0,
+                'estoque_minimo' => !empty($_POST['estoque_minimo']) ? $_POST['estoque_minimo'] : 0,
+                'lote' => null,
+                'data_validade' => !empty($_POST['data_validade']) ? $_POST['data_validade'] : null
+            ];
+            
+            Produto::create($dados);
+            $this->redirect('/estoque');
+        }
+    }
 }

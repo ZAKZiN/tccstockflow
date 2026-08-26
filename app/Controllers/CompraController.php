@@ -54,7 +54,7 @@ class CompraController extends Controller {
         $compras = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         // For the Modal
-        $stmtReq = $db->query("SELECT id_requisicao, material FROM requisicoes WHERE status LIKE 'Pendente%' OR status = 'Aprovado'");
+        $stmtReq = $db->query("SELECT id_requisicao, material, status FROM requisicoes WHERE status NOT IN ('Compra Efetuada', 'Recusado', 'Entregue')");
         $requisicoes = $stmtReq->fetchAll(PDO::FETCH_ASSOC);
         
         $stmtForn = $db->query("SELECT id_fornecedor, nome_fantasia FROM fornecedores");

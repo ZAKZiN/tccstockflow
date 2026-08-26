@@ -55,16 +55,16 @@
                 <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                     <div class="input-group" style="grid-column: 1 / -1;">
                         <label>Vincular Requisição</label>
-                        <select name="id_requisicao" required>
-                            <option value="">Selecione uma requisição aprovada/pendente...</option>
+                        <select name="id_requisicao" required class="form-control">
+                            <option value="">Selecione a requisição...</option>
                             <?php foreach($requisicoes as $r): ?>
-                                <option value="<?= $r['id_requisicao'] ?>">#<?= $r['id_requisicao'] ?> - <?= htmlspecialchars($r['material']) ?></option>
+                                <option value="<?= $r['id_requisicao'] ?>">#<?= $r['id_requisicao'] ?> - <?= htmlspecialchars($r['material']) ?> (<?= $r['status'] ?>)</option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="input-group" style="grid-column: 1 / -1;">
                         <label>Fornecedor</label>
-                        <select name="id_fornecedor" required>
+                        <select name="id_fornecedor" required class="form-control">
                             <option value="">Selecione o fornecedor...</option>
                             <?php foreach($fornecedores as $f): ?>
                                 <option value="<?= $f['id_fornecedor'] ?>"><?= htmlspecialchars($f['nome_fantasia']) ?></option>
@@ -73,7 +73,7 @@
                     </div>
                     <div class="input-group" style="grid-column: 1 / -1;">
                         <label>Valor Total (R$)</label>
-                        <input type="number" step="0.01" name="valor_total" placeholder="0.00" required>
+                        <input type="number" step="0.01" name="valor_total" placeholder="0.00" required class="form-control">
                     </div>
                 </div>
                 

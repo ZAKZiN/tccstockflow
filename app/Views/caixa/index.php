@@ -10,9 +10,9 @@
                     <h3 style="margin-bottom: 1rem;">Caixa Fechado</h3>
                     <p style="color: var(--text-secondary); margin-bottom: 2rem;">Você precisa abrir o caixa para iniciar as vendas deste turno.</p>
                     
-                    <div class="input-group" style="text-align: left;">
-                        <label>Fundo de Troco Inicial (R$)</label>
-                        <input type="number" step="0.01" id="saldoInicial" value="0.00" class="form-control">
+                    <div class="input-group" style="text-align: left; margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem;">Fundo de Troco Inicial (R$)</label>
+                        <input type="number" step="0.01" id="saldoInicial" value="0.00" class="form-control" style="width: 100%;">
                     </div>
                     <button class="btn btn-primary" onclick="abrirCaixa()" style="width: 100%;"><i class="ph ph-check-circle"></i> Abrir Caixa</button>
                 </div>
