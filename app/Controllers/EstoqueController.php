@@ -128,4 +128,54 @@ class EstoqueController extends Controller {
             $this->redirect('/estoque');
         }
     }
+
+    public function curvaAbc() {
+        if (!isset($_SESSION['usuario_id'])) {
+            $this->redirect('/dashboard');
+        }
+        
+        $db = \App\Core\Database::getConnection();
+        
+        // SQL para somar a receita por produto
+        $sql = "
+            SELECT 
+                p.id_produto,
+                p.nome_produto,
+                SUM(vi.quantidade) as total_vendido,
+                SUM(vi.quantidade * vi.preco_unitario) as receita_total
+            FROM produtos p
+            JOIN vendas_itens vi ON p.id_produto = vi.id_produto
+            JOIN vendas v ON vi.id_venda = v.id_venda
+            WHERE v.status = 'Concluída'
+            GROUP BY p.id_produto
+            ORDER BY receita_total DESC
+        ";
+        
+        $stmt = $db->query($sql);
+        $produtos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        
+        // Calcula o total geral de receita
+        $receitaGeral = array_sum(array_column($produtos, 'receita_total'));
+        
+        // Classifica em A, B e C
+        $acumulado = 0;
+        foreach ($produtos as &$prod) {
+            $prod['percentual'] = $receitaGeral > 0 ? ($prod['receita_total'] / $receitaGeral) * 100 : 0;
+            $acumulado += $prod['percentual'];
+            $prod['percentual_acumulado'] = $acumulado;
+            
+            if ($acumulado <= 80) {
+                $prod['curva'] = 'A';
+            } elseif ($acumulado <= 95) {
+                $prod['curva'] = 'B';
+            } else {
+                $prod['curva'] = 'C';
+            }
+        }
+        
+        $this->view('estoque/curva_abc', [
+            'produtos' => $produtos,
+            'receitaGeral' => $receitaGeral
+        ]);
+    }
 }

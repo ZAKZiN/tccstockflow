@@ -61,6 +61,7 @@ class VendaController extends Controller {
 
         $idCliente = $input['id_cliente'] ?? 1; // 1 = Cliente Padrão
         $metodoPagamento = $input['metodo_pagamento'] ?? 'Dinheiro';
+        $desconto = floatval($input['desconto'] ?? 0);
         $carrinho = $input['carrinho'];
 
         $db = Database::getConnection();
@@ -82,14 +83,15 @@ class VendaController extends Controller {
             }
             $idCaixa = $caixa['id_caixa'];
             
-            $valorTotal = 0;
+            $valorTotalBruto = 0;
             foreach ($carrinho as $item) {
-                $valorTotal += ($item['preco'] * $item['quantidade']);
+                $valorTotalBruto += ($item['preco'] * $item['quantidade']);
             }
+            $valorTotalLiquido = max(0, $valorTotalBruto - $desconto);
 
             // Inserir Venda
-            $stmtVenda = $db->prepare("INSERT INTO vendas (id_cliente, valor_total, metodo_pagamento) VALUES (?, ?, ?)");
-            $stmtVenda->execute([$idCliente, $valorTotal, $metodoPagamento]);
+            $stmtVenda = $db->prepare("INSERT INTO vendas (id_cliente, valor_total, desconto, metodo_pagamento) VALUES (?, ?, ?, ?)");
+            $stmtVenda->execute([$idCliente, $valorTotalLiquido, $desconto, $metodoPagamento]);
             $idVenda = $db->lastInsertId();
 
             // Processar Itens
@@ -108,21 +110,19 @@ class VendaController extends Controller {
                 $stmtMovimentacao->execute([$item['id'], $idUsuario, $item['quantidade'], $obs]);
             }
 
-            // Se for fiado, registra em contas a receber
-            if ($metodoPagamento === 'Fiado (Caderninho)') {
-                $stmtFiado = $db->prepare("INSERT INTO contas_receber (id_venda, id_cliente, valor_total, status) VALUES (?, ?, ?, 'Pendente')");
-                $stmtFiado->execute([$idVenda, $idCliente, $valorTotal]);
+            // Caixa: Se não for fiado, entra o dinheiro
+            if ($metodoPagamento !== 'Fiado (Caderninho)') {
+                $stmtMovCaixa = $db->prepare("INSERT INTO caixa_movimentacoes (id_caixa, tipo, valor, descricao) VALUES (?, 'Venda', ?, ?)");
+                $stmtMovCaixa->execute([$idCaixa, $valorTotalLiquido, "Venda #$idVenda - $metodoPagamento"]);
+            } else {
+                // Registrar Conta a Receber
+                $stmtFiado = $db->prepare("INSERT INTO contas_receber (id_venda, id_cliente, valor_total) VALUES (?, ?, ?)");
+                $stmtFiado->execute([$idVenda, $idCliente, $valorTotalLiquido]);
             }
             
-            // Se for dinheiro (ou outro método configurável no caixa), registra no caixa
-            if ($metodoPagamento === 'Dinheiro') {
-                $stmtCaixaMov = $db->prepare("INSERT INTO caixa_movimentacoes (id_caixa, tipo, valor, descricao) VALUES (?, 'Venda', ?, ?)");
-                $stmtCaixaMov->execute([$idCaixa, $valorTotal, 'Venda #' . $idVenda]);
-            }
-
             $db->commit();
             
-            echo json_encode(['success' => true, 'id_venda' => $idVenda, 'total' => $valorTotal]);
+            echo json_encode(['success' => true, 'id_venda' => $idVenda, 'total' => $valorTotalLiquido]);
         } catch (\Exception $e) {
             $db->rollBack();
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);

@@ -158,6 +158,7 @@ $router->get('/requisicoes/recusar/(\d+)', RequisicaoController::class . '@rejec
 
 // Estoque
 $router->get('/estoque', EstoqueController::class . '@index');
+$router->get('/estoque/curva-abc', EstoqueController::class . '@curvaAbc');
 $router->post('/estoque/novo', EstoqueController::class . '@store');
 $router->get('/estoque/historico/(\d+)', EstoqueController::class . '@historico');
 $router->post('/estoque/ajustar', EstoqueController::class . '@ajustar');

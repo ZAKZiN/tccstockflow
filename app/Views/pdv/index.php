@@ -54,6 +54,10 @@
                     <span class="h5">Total:</span>
                     <span class="h4 text-success fw-bold" id="totalCarrinho">R$ 0,00</span>
                 </div>
+                <div class="d-flex justify-content-between mb-3 align-items-center">
+                    <span class="form-label mb-0">Desconto (R$):</span>
+                    <input type="number" id="valorDesconto" class="form-control form-control-sm text-end" style="width: 100px;" value="0.00" step="0.01" min="0">
+                </div>
                 
                 <div class="mb-3">
                     <label class="form-label">Cliente</label>
@@ -262,9 +266,15 @@
             `;
         });
 
-        document.getElementById('totalCarrinho').innerText = formatCurrency(total);
+        let desconto = parseFloat(document.getElementById('valorDesconto').value) || 0;
+        let totalComDesconto = total - desconto;
+        if (totalComDesconto < 0) totalComDesconto = 0;
+
+        document.getElementById('totalCarrinho').innerText = formatCurrency(totalComDesconto);
         document.getElementById('cartCount').innerText = count + ' itens';
     };
+
+    document.getElementById('valorDesconto').addEventListener('input', atualizarCarrinho);
 
     document.getElementById('btnLimpar').addEventListener('click', () => {
         carrinho = [];
@@ -353,6 +363,27 @@
             } else {
                 return; // cancelou
             }
+        } else if (metodo_pagamento === 'Pix') {
+            const totalPixStr = document.getElementById('totalCarrinho').innerText.replace('R$','').trim();
+            const pixData = `00020126330014BR.GOV.BCB.PIX011112345678900520400005303986540${totalPixStr.length}${totalPixStr}5802BR5913STOCKFLOW LTDA6009SAO PAULO62070503***6304`; // Payload fictício
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pixData)}`;
+            
+            const result = await Swal.fire({
+                title: 'Pagamento via PIX',
+                html: `
+                    <p>Aguardando pagamento de <strong>R$ ${totalPixStr}</strong>...</p>
+                    <img src="${qrUrl}" alt="QR Code Pix" style="margin: 20px auto; border-radius: 10px; border: 2px solid #ddd; padding: 10px;">
+                    <p class="text-muted" style="font-size: 0.9em;">(Na vida real, a API bancária fecharia esta tela automaticamente após o pagamento)</p>
+                `,
+                showCancelButton: true,
+                confirmButtonText: '<i class="ph ph-check-circle"></i> Confirmar Recebimento',
+                confirmButtonColor: 'var(--success)',
+                cancelButtonText: 'Cancelar'
+            });
+            
+            if (!result.isConfirmed) {
+                return; // Cancelou o PIX
+            }
         }
         
         const btnFinalizar = document.getElementById('btnFinalizar');
@@ -360,10 +391,11 @@
         btnFinalizar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando...';
 
         try {
+            const descontoFinal = parseFloat(document.getElementById('valorDesconto').value) || 0;
             const res = await fetch('/pdv/finalizar', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_cliente, metodo_pagamento: metodo_pagamento_final, carrinho })
+                body: JSON.stringify({ id_cliente, metodo_pagamento: metodo_pagamento_final, carrinho, desconto: descontoFinal })
             });
             const data = await res.json();
             

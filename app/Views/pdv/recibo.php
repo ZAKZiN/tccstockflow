@@ -84,12 +84,13 @@
             background: #4b5563;
         }
         @media print {
-            body { margin: 0; padding: 0; }
+            @page { margin: 0; size: 80mm auto; }
+            body { margin: 0; padding: 0; width: 100%; }
             .no-print { display: none !important; }
         }
     </style>
 </head>
-<body>
+<body onload="if(new URLSearchParams(window.location.search).get('print') === '1') { window.print(); setTimeout(() => window.close(), 500); }">
     
     <div class="no-print">
         <button onclick="window.print()">🖨️ Imprimir</button>
@@ -119,20 +120,35 @@
         </div>
         
         <div style="margin-top: 5px;">
-            <?php foreach($itens as $i): ?>
+            <?php 
+                $subtotal = 0;
+                foreach($itens as $item): 
+                $totalItem = $item['quantidade'] * $item['preco_unitario'];
+                $subtotal += $totalItem;
+            ?>
                 <div class="item">
-                    <span class="item-name"><?= htmlspecialchars($i['nome_produto']) ?></span>
-                    <span class="item-qty">x<?= floatval($i['quantidade']) ?></span>
-                    <span class="item-price">R$ <?= number_format($i['quantidade'] * $i['preco_unitario'], 2, ',', '.') ?></span>
+                    <span class="item-name"><?= htmlspecialchars($item['nome_produto']) ?></span>
+                    <span class="item-qty"><?= $item['quantidade'] ?></span>
+                    <span class="item-price"><?= number_format($totalItem, 2, ',', '.') ?></span>
                 </div>
             <?php endforeach; ?>
         </div>
-    </div>
-
-    <div class="totals">
-        <div class="total-line">
-            <span>TOTAL R$</span>
-            <span><?= number_format($venda['valor_total'], 2, ',', '.') ?></span>
+        
+        <div class="totals">
+            <?php if(isset($venda['desconto']) && $venda['desconto'] > 0): ?>
+            <div class="item" style="margin-bottom: 2px;">
+                <span class="item-name">Subtotal:</span>
+                <span>R$ <?= number_format($subtotal, 2, ',', '.') ?></span>
+            </div>
+            <div class="item" style="color: #ef4444; margin-bottom: 2px;">
+                <span class="item-name">Desconto:</span>
+                <span>- R$ <?= number_format($venda['desconto'], 2, ',', '.') ?></span>
+            </div>
+            <?php endif; ?>
+            <div class="total-line">
+                <span>TOTAL:</span>
+                <span>R$ <?= number_format($venda['valor_total'], 2, ',', '.') ?></span>
+            </div>
         </div>
     </div>
 

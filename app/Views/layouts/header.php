@@ -44,7 +44,8 @@
                 <?php endif; ?>
 
                 <?php if(in_array($nivel, ['Administrador', 'Gerente', 'Estoquista'])): ?>
-                    <li class="animate-fade-up delay-300"><a href="/estoque" class="<?= strpos($uri, '/estoque') === 0 ? 'active' : '' ?>"><i class="ph ph-archive"></i> Estoque</a></li>
+                    <li class="animate-fade-up delay-650"><a href="/estoque" class="<?= strpos($uri, '/estoque') === 0 && strpos($uri, '/estoque/curva-abc') === false ? 'active' : '' ?>"><i class="ph ph-package"></i> Estoque</a></li>
+                    <li class="animate-fade-up delay-650"><a href="/estoque/curva-abc" class="<?= strpos($uri, '/estoque/curva-abc') === 0 ? 'active' : '' ?>"><i class="ph ph-chart-line-up"></i> Curva ABC (BI)</a></li>
                     <li class="animate-fade-up delay-400"><a href="/fornecedores" class="<?= strpos($uri, '/fornecedores') === 0 ? 'active' : '' ?>"><i class="ph ph-truck"></i> Fornecedores</a></li>
                     <li class="animate-fade-up delay-400"><a href="/compras" class="<?= strpos($uri, '/compras') === 0 ? 'active' : '' ?>"><i class="ph ph-shopping-cart"></i> Compras</a></li>
                 <?php endif; ?>

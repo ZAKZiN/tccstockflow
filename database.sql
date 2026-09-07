@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS vendas (
     id_venda INTEGER PRIMARY KEY AUTOINCREMENT,
     id_cliente INT,
     valor_total DECIMAL(10,2) NOT NULL,
+    desconto DECIMAL(10,2) DEFAULT 0.00,
     metodo_pagamento VARCHAR(50) NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'Concluída',
     data_venda TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
