@@ -50,9 +50,16 @@
                                         <td style="color: var(--text-secondary);"><?= date('d/m/Y H:i', strtotime($c['criado_em'])) ?></td>
                                         <td>
                                             <?php if($c['status'] === 'Pendente'): ?>
-                                                <a href="/fiado/pagar/<?= $c['id_conta'] ?>" class="btn" style="background-color: var(--success-bg); color: var(--success); padding: 0.25rem 0.5rem; font-size: 0.85rem;" onclick="confirmarBaixa(event, this.href, '<?= htmlspecialchars($c['cliente']) ?>')">
-                                                    <i class="ph ph-check-circle"></i> Dar Baixa
-                                                </a>
+                                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                                    <a href="/fiado/pagar/<?= $c['id_conta'] ?>" class="btn" style="background-color: var(--success-bg); color: var(--success); padding: 0.25rem 0.5rem; font-size: 0.85rem;" onclick="confirmarBaixa(event, this.href, '<?= htmlspecialchars($c['cliente']) ?>')">
+                                                        <i class="ph ph-check-circle"></i> Dar Baixa
+                                                    </a>
+                                                    <?php if(!empty($c['telefone'])): ?>
+                                                        <a href="https://wa.me/<?= preg_replace('/\D/', '', $c['telefone']) ?>?text=<?= urlencode("Olá " . $c['cliente'] . ", consta um débito pendente de R$ " . number_format($c['valor_total'], 2, ',', '.') . " referente à Venda #" . str_pad($c['id_venda'], 4, '0', STR_PAD_LEFT) . ". Como podemos ajudar?") ?>" target="_blank" class="btn" style="background-color: #25D366; color: white; padding: 0.25rem 0.5rem; font-size: 0.85rem;" title="Cobrar por WhatsApp">
+                                                            <i class="ph ph-whatsapp-logo"></i>
+                                                        </a>
+                                                    <?php endif; ?>
+                                                </div>
                                             <?php else: ?>
                                                 - 
                                             <?php endif; ?>

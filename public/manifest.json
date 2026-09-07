@@ -1,0 +1,16 @@
+{
+  "name": "StockFlow PDV",
+  "short_name": "StockFlow",
+  "description": "Sistema de Frente de Caixa e Gestão",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3593/3593976.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

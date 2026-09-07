@@ -9,6 +9,15 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/dark-mode.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js');
+            });
+        }
+    </script>
 </head>
 <body>
 
@@ -42,6 +51,7 @@
 
                 <?php if($nivel === 'Administrador'): ?>
                     <li class="animate-fade-up delay-450"><a href="/usuarios" class="<?= strpos($uri, '/usuarios') === 0 ? 'active' : '' ?>"><i class="ph ph-users"></i> Usuários (Cargos)</a></li>
+                    <li class="animate-fade-up delay-450"><a href="/auditoria" class="<?= strpos($uri, '/auditoria') === 0 ? 'active' : '' ?>"><i class="ph ph-shield-check"></i> Auditoria e Logs</a></li>
                 <?php endif; ?>
 
                 <li class="animate-fade-up delay-500">

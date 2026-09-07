@@ -71,6 +71,7 @@
                         <option value="Pix">Pix</option>
                         <option value="Cartão de Crédito">Cartão de Crédito</option>
                         <option value="Cartão de Débito">Cartão de Débito</option>
+                        <option value="Misto">Misto (Múltiplas Formas)</option>
                         <option value="Fiado (Caderninho)">Fiado (Caderninho)</option>
                     </select>
                 </div>
@@ -295,6 +296,8 @@
         const metodo_pagamento = document.getElementById('pagamentoSelect').value;
         
         let trocoMessage = '';
+        let metodo_pagamento_final = metodo_pagamento;
+
         if (metodo_pagamento === 'Dinheiro') {
             const valorRecebidoStr = prompt('Qual o valor recebido em dinheiro? (Ex: 50.00)');
             if (valorRecebidoStr) {
@@ -309,6 +312,47 @@
             } else {
                 return; // Cancelou o prompt
             }
+        } else if (metodo_pagamento === 'Misto') {
+            const { value: formValues } = await Swal.fire({
+                title: 'Pagamento Misto',
+                html: `
+                    <div style="text-align: left;">
+                        <label>Valor em Dinheiro (R$):</label>
+                        <input id="swal-input1" class="swal2-input" type="number" step="0.01" placeholder="0.00">
+                        <label>Valor Cartão/Pix (R$):</label>
+                        <input id="swal-input2" class="swal2-input" type="number" step="0.01" placeholder="0.00">
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Confirmar Pagamento',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    return [
+                        document.getElementById('swal-input1').value,
+                        document.getElementById('swal-input2').value
+                    ]
+                }
+            });
+
+            if (formValues) {
+                const valDin = parseFloat(formValues[0] || 0);
+                const valOutro = parseFloat(formValues[1] || 0);
+                const totalRecebido = valDin + valOutro;
+                const totalCalculado = parseFloat(document.getElementById('totalCarrinho').innerText.replace('R$','').replace('.','').replace(',','.'));
+
+                if (totalRecebido < totalCalculado) {
+                    Swal.fire('Atenção', 'A soma dos pagamentos é menor que o total da compra.', 'warning');
+                    return;
+                }
+                
+                const troco = totalRecebido - totalCalculado;
+                if (troco > 0) {
+                    trocoMessage = `<br><br><strong>Troco:</strong> ${formatCurrency(troco)}`;
+                }
+                metodo_pagamento_final = `Misto: Dinheiro (R$ ${valDin.toFixed(2)}) + Outros (R$ ${valOutro.toFixed(2)})`;
+            } else {
+                return; // cancelou
+            }
         }
         
         const btnFinalizar = document.getElementById('btnFinalizar');
@@ -319,7 +363,7 @@
             const res = await fetch('/pdv/finalizar', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_cliente, metodo_pagamento, carrinho })
+                body: JSON.stringify({ id_cliente, metodo_pagamento: metodo_pagamento_final, carrinho })
             });
             const data = await res.json();
             
@@ -329,7 +373,7 @@
                 carrinho.forEach(i => {
                     msg += `${i.quantidade}x ${i.nome} - R$ ${i.preco.toFixed(2)}\n`;
                 });
-                msg += `\n*Total: R$ ${data.total.toFixed(2)}*\n*Pagamento:* ${metodo_pagamento}\n\nObrigado pela preferência!`;
+                msg += `\n*Total: R$ ${data.total.toFixed(2)}*\n*Pagamento:* ${metodo_pagamento_final}\n\nObrigado pela preferência!`;
                 
                 let swalConfig = {
                     title: 'Venda Finalizada!',

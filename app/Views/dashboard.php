@@ -56,6 +56,20 @@
                     </div>
                 </div>
                 
+                <?php 
+                    $faturamento = $stats['faturamento_hoje'] > 0 ? $stats['faturamento_hoje'] : 1; // previne div zero
+                    $margem = ($stats['lucro_hoje'] / $faturamento) * 100;
+                ?>
+                <div class="stat-card glass-panel animate-fade-up delay-150" style="border-left: 4px solid #10b981;">
+                    <div class="stat-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.1);">
+                        <i class="ph ph-trend-up"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>R$ <?= number_format($stats['lucro_hoje'], 2, ',', '.') ?></h3>
+                        <p>Lucro Líquido Hoje <span style="font-size: 0.8rem; color: #10b981;">(<?= number_format($margem, 1, ',', '.') ?>%)</span></p>
+                    </div>
+                </div>
+                
                 <div class="stat-card glass-panel animate-fade-up delay-200">
                     <div class="stat-icon icon-yellow">
                         <i class="ph ph-receipt"></i>

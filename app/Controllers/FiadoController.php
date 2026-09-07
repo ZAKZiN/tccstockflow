@@ -16,7 +16,7 @@ class FiadoController extends Controller {
         $db = Database::getConnection();
         
         $sql = "
-            SELECT cr.id_conta, c.nome as cliente, cr.valor_total, cr.status, cr.criado_em, cr.id_venda 
+            SELECT cr.id_conta, c.nome as cliente, c.telefone, cr.valor_total, cr.status, cr.criado_em, cr.id_venda 
             FROM contas_receber cr
             JOIN clientes c ON cr.id_cliente = c.id_cliente
             ORDER BY cr.status DESC, cr.criado_em DESC

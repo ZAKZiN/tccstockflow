@@ -23,6 +23,16 @@ class DashboardController extends Controller {
         ");
         $faturamentoHoje = $stmtFaturamento->fetchColumn() ?: 0;
         
+        // Lucro Hoje (Faturamento - Custo)
+        $stmtLucro = $db->query("
+            SELECT SUM((vi.preco_unitario - p.preco_custo) * vi.quantidade)
+            FROM vendas_itens vi
+            JOIN produtos p ON vi.id_produto = p.id_produto
+            JOIN vendas v ON vi.id_venda = v.id_venda
+            WHERE date(v.data_venda) = date('now', 'localtime')
+        ");
+        $lucroHoje = $stmtLucro->fetchColumn() ?: 0;
+        
         // Vendas Hoje
         $stmtVendas = $db->query("
             SELECT COUNT(*) 
@@ -91,6 +101,7 @@ class DashboardController extends Controller {
         
         $stats = [
             'faturamento_hoje' => $faturamentoHoje,
+            'lucro_hoje' => $lucroHoje,
             'vendas_hoje' => $vendasHoje,
             'estoque_critico' => $estoqueCritico,
             'chart_mensal' => json_encode($chartMensal),

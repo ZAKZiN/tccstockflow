@@ -94,6 +94,7 @@
     <div class="no-print">
         <button onclick="window.print()">🖨️ Imprimir</button>
         <button class="secondary" onclick="gerarPDF()">📄 Salvar PDF</button>
+        <button style="background-color: #25D366;" onclick="window.open('https://wa.me/?text=<?= urlencode("Olá! Aqui está o comprovante da sua compra (Venda #" . str_pad($venda['id_venda'], 4, '0', STR_PAD_LEFT) . ") no valor de R$ " . number_format($venda['valor_total'], 2, ',', '.') . ". Obrigado pela preferência!") ?>', '_blank')">💬 Enviar no WhatsApp</button>
     </div>
 
     <div id="recibo-content">

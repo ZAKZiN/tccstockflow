@@ -106,6 +106,7 @@ $router->before('GET|POST', '/compras.*', function() { checkAccess(['Administrad
 $router->before('GET|POST', '/requisicoes.*', function() { checkAccess(['Administrador', 'Gerente', 'Estoquista']); });
 $router->before('GET|POST', '/pdv.*', function() { checkAccess(['Administrador', 'Gerente', 'Operador de Caixa']); });
 $router->before('GET|POST', '/fiado.*', function() { checkAccess(['Administrador', 'Gerente', 'Operador de Caixa']); });
+$router->before('GET|POST', '/auditoria.*', function() { checkAccess(['Administrador']); });
 
 use App\Controllers\DashboardController;
 use App\Controllers\RequisicaoController;
@@ -115,6 +116,7 @@ use App\Controllers\CompraController;
 use App\Controllers\NotificacaoController;
 use App\Controllers\UsuarioController;
 use App\Controllers\CaixaController;
+use App\Controllers\AuditoriaController;
 
 // Dashboard
 $router->get('/dashboard', DashboardController::class . '@index');
@@ -130,6 +132,9 @@ $router->get('/caixa/relatorio/(\d+)', CaixaController::class . '@relatorio');
 $router->get('/usuarios', UsuarioController::class . '@index');
 $router->post('/usuarios', UsuarioController::class . '@store');
 $router->post('/usuarios/excluir', UsuarioController::class . '@destroy');
+
+// Auditoria
+$router->get('/auditoria', AuditoriaController::class . '@index');
 
 use App\Controllers\VendaController;
 
