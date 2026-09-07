@@ -384,7 +384,7 @@ tr:hover { background-color: var(--bg-secondary); }
 .badge-warning { background-color: var(--warning-bg); color: var(--warning); }
 .badge-danger { background-color: var(--danger-bg); color: var(--danger); }
 
-/* === IMPRESS�O PROFISSIONAL (PDF) === */
+/* === IMPRESSÃO PROFISSIONAL (PDF) === */
 @media print {
     body { background-color: #fff; color: #000; }
     .sidebar, .btn, #scanner-modal, .input-icon-wrapper { display: none !important; }
@@ -398,14 +398,64 @@ tr:hover { background-color: var(--bg-secondary); }
     @page { margin: 1.5cm; }
 }
 
-/* === RESPONSIVIDADE (Tablets e Mobile) === */
+/* === RESPONSIVIDADE (Celular e Tablets App-Like UX) === */
 @media (max-width: 768px) {
     .app-layout { flex-direction: column; }
-    .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-subtle); padding: 1rem; }
-    .sidebar-brand { margin-bottom: 1rem; }
-    .sidebar-menu { flex-direction: row; flex-wrap: wrap; justify-content: space-around; gap: 0.5rem; }
-    .sidebar-menu a { padding: 0.5rem; font-size: 0.85rem; flex-direction: column; gap: 0.25rem; text-align: center; }
-    .sidebar-menu a i { font-size: 1.5rem; }
-    .main-content { padding: 1rem; }
-    .topbar { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    
+    /* Header Top Bar minimalista para Mobile */
+    .sidebar-brand { 
+        position: fixed; top: 0; left: 0; right: 0; 
+        height: 60px; background-color: var(--sidebar-bg); 
+        border-bottom: 1px solid var(--border-subtle);
+        margin: 0; padding: 0 1.5rem;
+        display: flex; align-items: center; justify-content: space-between;
+        z-index: 1000;
+    }
+    
+    /* Menu Inferior (Bottom Navigation Tab Bar) */
+    .sidebar { 
+        width: 100%; height: auto;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background-color: var(--sidebar-bg);
+        border-right: none; border-top: 1px solid var(--border-subtle); 
+        padding: 0.5rem;
+        z-index: 1000;
+        display: flex; flex-direction: column; justify-content: center;
+    }
+    
+    /* Itens do Menu alinhados horizontalmente */
+    .sidebar-menu { 
+        flex-direction: row; flex-wrap: nowrap; justify-content: space-between; gap: 0.2rem; 
+        overflow-x: auto; /* Permite scroll se tiver muitos itens */
+        padding-bottom: 5px; /* Pra dar espaço pra barra do iOS */
+    }
+    
+    .sidebar-menu::-webkit-scrollbar { display: none; } /* Esconder scrollbar na tab */
+    
+    .sidebar-menu li { flex: 1; min-width: 65px; }
+    
+    .sidebar-menu a { 
+        padding: 0.5rem; font-size: 0.7rem; 
+        flex-direction: column; gap: 0.3rem; text-align: center; 
+        border-left: none; border-radius: 8px;
+    }
+    .sidebar-menu a.active { border-left: none; border-bottom: 3px solid #2563eb; background: var(--sidebar-hover); }
+    .sidebar-menu a i { font-size: 1.4rem; }
+    
+    /* Ajustes do Main Content para não ficar em baixo das barras fixas */
+    .main-content { 
+        padding: 1rem; 
+        margin-top: 60px; /* espaço pro header fixo */
+        padding-bottom: 90px; /* espaço pro bottom nav + margem */
+    }
+    
+    .topbar { flex-direction: column; align-items: flex-start; gap: 1rem; padding-top: 0.5rem; }
+    
+    /* Tabelas em Mobile com scroll horizontal */
+    .table-container, .table-responsive, table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
 }

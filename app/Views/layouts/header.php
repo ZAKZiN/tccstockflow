@@ -24,8 +24,12 @@
     <div class="app-layout">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="sidebar-brand animate-fade-up">
-                <i class="ph ph-package"></i> StockFlow
+            <div class="sidebar-brand animate-fade-up d-flex justify-content-between align-items-center w-100">
+                <span><i class="ph ph-package"></i> StockFlow</span>
+                <div class="d-md-none d-flex gap-2">
+                    <a href="#" id="themeToggleMobile" class="text-white text-decoration-none"><i class="ph ph-moon fs-4"></i></a>
+                    <a href="/logout" class="text-white text-decoration-none"><i class="ph ph-sign-out fs-4"></i></a>
+                </div>
             </div>
             
             <?php 
@@ -43,6 +47,11 @@
                     <li class="animate-fade-up delay-250"><a href="/fiado" class="<?= strpos($uri, '/fiado') === 0 ? 'active' : '' ?>"><i class="ph ph-notebook"></i> Fiado / Receber</a></li>
                 <?php endif; ?>
 
+                <?php if(in_array($nivel, ['Administrador'])): ?>
+                    <li class="animate-fade-up delay-300"><a href="/clientes" class="<?= strpos($uri, '/clientes') === 0 ? 'active' : '' ?>"><i class="ph ph-users"></i> Clientes</a></li>
+                    <li class="animate-fade-up delay-350"><a href="/usuarios" class="<?= strpos($uri, '/usuarios') === 0 ? 'active' : '' ?>"><i class="ph ph-identification-card"></i> Usuários</a></li>
+                <?php endif; ?>
+
                 <?php if(in_array($nivel, ['Administrador', 'Gerente', 'Estoquista'])): ?>
                     <li class="animate-fade-up delay-650"><a href="/estoque" class="<?= strpos($uri, '/estoque') === 0 && strpos($uri, '/estoque/curva-abc') === false ? 'active' : '' ?>"><i class="ph ph-package"></i> Estoque</a></li>
                     <li class="animate-fade-up delay-650"><a href="/estoque/curva-abc" class="<?= strpos($uri, '/estoque/curva-abc') === 0 ? 'active' : '' ?>"><i class="ph ph-chart-line-up"></i> Curva ABC (BI)</a></li>
@@ -50,16 +59,14 @@
                     <li class="animate-fade-up delay-400"><a href="/compras" class="<?= strpos($uri, '/compras') === 0 ? 'active' : '' ?>"><i class="ph ph-shopping-cart"></i> Compras</a></li>
                 <?php endif; ?>
 
-                <?php if($nivel === 'Administrador'): ?>
-                    <li class="animate-fade-up delay-450"><a href="/usuarios" class="<?= strpos($uri, '/usuarios') === 0 ? 'active' : '' ?>"><i class="ph ph-users"></i> Usuários (Cargos)</a></li>
+                <?php if(in_array($nivel, ['Administrador'])): ?>
                     <li class="animate-fade-up delay-450"><a href="/auditoria" class="<?= strpos($uri, '/auditoria') === 0 ? 'active' : '' ?>"><i class="ph ph-shield-check"></i> Auditoria e Logs</a></li>
                 <?php endif; ?>
 
-                <li class="animate-fade-up delay-500">
+                <li class="animate-fade-up delay-500 d-none d-md-block">
                     <a href="#" id="themeToggle"><i class="ph ph-moon"></i> Modo Escuro</a>
                 </li>
-
-                <li class="animate-fade-up delay-500"><a href="/logout"><i class="ph ph-sign-out"></i> Sair</a></li>
+                <li class="animate-fade-up delay-500 d-none d-md-block"><a href="/logout"><i class="ph ph-sign-out"></i> Sair</a></li>
             </ul>
         </aside>
 
@@ -69,26 +76,33 @@
     <script>
         // Lógica do Dark Mode
         const themeToggle = document.getElementById('themeToggle');
+        const themeToggleMobile = document.getElementById('themeToggleMobile');
         const body = document.body;
-        const icon = themeToggle.querySelector('i');
+        
+        function setDarkTheme(isDark) {
+            if (isDark) {
+                body.classList.add('dark-theme');
+                localStorage.setItem('theme', 'dark');
+                if(themeToggle) themeToggle.innerHTML = '<i class="ph ph-sun"></i> Modo Claro';
+                if(themeToggleMobile) themeToggleMobile.innerHTML = '<i class="ph ph-sun fs-4"></i>';
+            } else {
+                body.classList.remove('dark-theme');
+                localStorage.setItem('theme', 'light');
+                if(themeToggle) themeToggle.innerHTML = '<i class="ph ph-moon"></i> Modo Escuro';
+                if(themeToggleMobile) themeToggleMobile.innerHTML = '<i class="ph ph-moon fs-4"></i>';
+            }
+        }
 
         // Check local storage
         if (localStorage.getItem('theme') === 'dark') {
-            body.classList.add('dark-theme');
-            icon.classList.replace('ph-moon', 'ph-sun');
-            themeToggle.innerHTML = '<i class="ph ph-sun"></i> Modo Claro';
+            setDarkTheme(true);
         }
 
-        themeToggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            body.classList.toggle('dark-theme');
-            
-            if (body.classList.contains('dark-theme')) {
-                localStorage.setItem('theme', 'dark');
-                themeToggle.innerHTML = '<i class="ph ph-sun"></i> Modo Claro';
-            } else {
-                localStorage.setItem('theme', 'light');
-                themeToggle.innerHTML = '<i class="ph ph-moon"></i> Modo Escuro';
-            }
-        });
+        const toggleHandler = (e) => {
+            if (e) e.preventDefault();
+            setDarkTheme(!body.classList.contains('dark-theme'));
+        };
+
+        if(themeToggle) themeToggle.addEventListener('click', toggleHandler);
+        if(themeToggleMobile) themeToggleMobile.addEventListener('click', toggleHandler);
     </script>
