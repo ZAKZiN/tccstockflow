@@ -65,8 +65,8 @@ use App\Controllers\AuthController;
 $router->get('/', AuthController::class . '@index');
 $router->post('/login', AuthController::class . '@login');
 $router->get('/logout', AuthController::class . '@logout');
-$router->get('/login/google', AuthController::class . '@googleLogin');
-$router->get('/login/google/callback', AuthController::class . '@googleCallback');
+// $router->get('/login/google', AuthController::class . '@googleLogin');
+// $router->get('/login/google/callback', AuthController::class . '@googleCallback');
 
 // --- Configuração de Permissões (RBAC) ---
 function checkAccess($allowedRoles) {

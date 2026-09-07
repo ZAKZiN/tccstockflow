@@ -4,7 +4,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\Usuario;
-use League\OAuth2\Client\Provider\Google;
+// use League\OAuth2\Client\Provider\Google;
 
 class AuthController extends Controller {
     
@@ -78,6 +78,7 @@ class AuthController extends Controller {
         $this->redirect('/');
     }
 
+    /*
     private function getGoogleProvider() {
         return new Google([
             'clientId'     => $_ENV['GOOGLE_CLIENT_ID'] ?? '',
@@ -182,4 +183,5 @@ class AuthController extends Controller {
             exit;
         }
     }
+    */
 }
