@@ -375,6 +375,41 @@
         }
     });
 
+    // --- Lógica do Scanner de Câmera ---
+    let html5QrcodeScanner = null;
+
+    document.getElementById('scannerModal').addEventListener('shown.bs.modal', function () {
+        if (!html5QrcodeScanner) {
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+            
+            html5QrcodeScanner.render((decodedText, decodedResult) => {
+                document.getElementById('codigoBusca').value = decodedText;
+                
+                // Fecha o modal via botão de fechar (mais compatível se bootstrap não estiver global)
+                document.getElementById('closeScanner').click();
+
+                // Dispara o Enter no campo de busca
+                const event = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13 });
+                document.getElementById('codigoBusca').dispatchEvent(event);
+                
+                html5QrcodeScanner.clear().catch(error => {
+                    console.error("Failed to clear html5QrcodeScanner. ", error);
+                });
+                html5QrcodeScanner = null;
+            }, (errorMessage) => {
+                // erros ignorados durante o scan
+            });
+        }
+    });
+
+    document.getElementById('scannerModal').addEventListener('hidden.bs.modal', function () {
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear().catch(e => console.log(e));
+            html5QrcodeScanner = null;
+        }
+    });
+
     // Inicializa
     renderBusca();
 

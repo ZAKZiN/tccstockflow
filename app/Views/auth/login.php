@@ -50,6 +50,17 @@
                 <button type="submit" class="btn btn-primary animate-fade-up delay-300" style="width: 100%; margin-top: 1rem;">
                     Entrar no Sistema <i class="ph ph-sign-in"></i>
                 </button>
+
+                <!-- 
+                DESATIVADO TEMPORARIAMENTE: Falta criar o projeto no Google Cloud
+                <div style="text-align: center; margin: 1rem 0;" class="animate-fade-up delay-300">
+                    <span style="color: #64748b; font-size: 0.875rem;">ou</span>
+                </div>
+
+                <a href="/login/google" class="btn animate-fade-up delay-300" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 0.5rem; background-color: white; color: #333; border: 1px solid #ccc; text-decoration: none;">
+                    <i class="ph ph-google-logo" style="color: #ea4335; font-size: 1.25rem;"></i> Entrar com Google
+                </a>
+                -->
             </form>
         </div>
     </div>

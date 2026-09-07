@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/dark-mode.css">
 </head>
 <body>
 
@@ -43,9 +44,40 @@
                     <li class="animate-fade-up delay-450"><a href="/usuarios" class="<?= strpos($uri, '/usuarios') === 0 ? 'active' : '' ?>"><i class="ph ph-users"></i> Usuários (Cargos)</a></li>
                 <?php endif; ?>
 
+                <li class="animate-fade-up delay-500">
+                    <a href="#" id="themeToggle"><i class="ph ph-moon"></i> Modo Escuro</a>
+                </li>
+
                 <li class="animate-fade-up delay-500"><a href="/logout"><i class="ph ph-sign-out"></i> Sair</a></li>
             </ul>
         </aside>
 
         <!-- Main Content -->
         <main class="main-content">
+
+    <script>
+        // Lógica do Dark Mode
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        const icon = themeToggle.querySelector('i');
+
+        // Check local storage
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark-theme');
+            icon.classList.replace('ph-moon', 'ph-sun');
+            themeToggle.innerHTML = '<i class="ph ph-sun"></i> Modo Claro';
+        }
+
+        themeToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            body.classList.toggle('dark-theme');
+            
+            if (body.classList.contains('dark-theme')) {
+                localStorage.setItem('theme', 'dark');
+                themeToggle.innerHTML = '<i class="ph ph-sun"></i> Modo Claro';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeToggle.innerHTML = '<i class="ph ph-moon"></i> Modo Escuro';
+            }
+        });
+    </script>

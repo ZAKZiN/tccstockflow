@@ -1,0 +1,37 @@
+/* Modo Escuro */
+body.dark-theme {
+    --bg-color: #121212;
+    --bg-panel: #1e1e1e;
+    --bg-card: #1e1e1e;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0a0;
+    --border-color: #333;
+    --border-subtle: #333;
+    --sidebar-bg: #1a1a1a;
+    --sidebar-text: #e0e0e0;
+    --sidebar-active: #2d2d2d;
+    --sidebar-hover: #2a2a2a;
+    
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+}
+
+body.dark-theme .app-layout { background-color: var(--bg-color); }
+body.dark-theme .sidebar { background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color); }
+body.dark-theme .sidebar-brand { color: var(--text-primary); }
+body.dark-theme .sidebar-menu a { color: var(--sidebar-text); }
+body.dark-theme .sidebar-menu a:hover { background: var(--sidebar-hover); }
+body.dark-theme .sidebar-menu a.active { background: var(--sidebar-active); border-right-color: #2563eb; }
+body.dark-theme .glass-panel, body.dark-theme .card { background: var(--bg-panel); border-color: var(--border-color); box-shadow: none; color: var(--text-primary); }
+body.dark-theme .card-header, body.dark-theme .card-footer { background-color: var(--sidebar-active); border-color: var(--border-color); color: var(--text-primary); }
+body.dark-theme .table { color: var(--text-primary); --bs-table-color: var(--text-primary); --bs-table-bg: transparent; }
+body.dark-theme .table-hover tbody tr:hover { color: var(--text-primary); background-color: var(--sidebar-hover); }
+body.dark-theme th, body.dark-theme td { border-bottom-color: var(--border-color); color: var(--text-primary); }
+body.dark-theme .form-control, body.dark-theme .form-select { background-color: var(--bg-panel); border-color: var(--border-color); color: var(--text-primary); }
+body.dark-theme .form-control:focus, body.dark-theme .form-select:focus { background-color: var(--bg-panel); color: var(--text-primary); }
+body.dark-theme .topbar { border-bottom: 1px solid var(--border-color); }
+body.dark-theme .modal-content { background-color: var(--bg-panel); color: var(--text-primary); border-color: var(--border-color); }
+body.dark-theme .modal-header, body.dark-theme .modal-footer { border-color: var(--border-color); }
+body.dark-theme .text-muted { color: var(--text-secondary) !important; }
+body.dark-theme .bg-light { background-color: #252525 !important; }
+body.dark-theme .alert-error { background-color: rgba(239, 68, 68, 0.15) !important; border-color: rgba(239, 68, 68, 0.3) !important; }

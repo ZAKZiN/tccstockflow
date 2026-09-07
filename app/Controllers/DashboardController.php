@@ -34,6 +34,9 @@ class DashboardController extends Controller {
         // Estoque Crítico
         $stmtEstoque = $db->query("SELECT COUNT(*) FROM produtos WHERE quantidade_estoque <= estoque_minimo");
         $estoqueCritico = $stmtEstoque->fetchColumn();
+
+        $stmtEstoqueList = $db->query("SELECT nome_produto, quantidade_estoque, estoque_minimo FROM produtos WHERE quantidade_estoque <= estoque_minimo");
+        $estoqueCriticoList = $stmtEstoqueList->fetchAll(PDO::FETCH_ASSOC);
         
         // Chart 1: Faturamento por Mês (Current Year)
         $stmtChart1 = $db->query("
@@ -94,7 +97,8 @@ class DashboardController extends Controller {
             'chart_top_labels' => json_encode($produtosNomes),
             'chart_top_data' => json_encode($produtosTotais),
             'top_produtos_list' => $topProdutosList,
-            'vencendo' => $vencendo
+            'vencendo' => $vencendo,
+            'estoque_critico_list' => $estoqueCriticoList
         ];
         
         $this->view('dashboard', ['stats' => $stats]);

@@ -67,12 +67,36 @@
             padding-top: 10px;
             font-size: 10px;
         }
+        .no-print {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .no-print button {
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+        }
+        .no-print button.secondary {
+            background: #4b5563;
+        }
         @media print {
             body { margin: 0; padding: 0; }
+            .no-print { display: none !important; }
         }
     </style>
 </head>
-<body onload="window.print(); setTimeout(() => window.close(), 500);">
+<body>
+    
+    <div class="no-print">
+        <button onclick="window.print()">🖨️ Imprimir</button>
+        <button class="secondary" onclick="gerarPDF()">📄 Salvar PDF</button>
+    </div>
+
+    <div id="recibo-content">
     
     <div class="header">
         <h1>STOCKFLOW PDV</h1>
@@ -115,5 +139,23 @@
         <p>Obrigado pela preferência!</p>
         <p>Volte Sempre</p>
     </div>
+    
+    </div> <!-- Fim recibo-content -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        function gerarPDF() {
+            const element = document.getElementById('recibo-content');
+            const opt = {
+                margin:       5,
+                filename:     'Recibo_<?= $venda['id_venda'] ?>.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: [80, 200], orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
 </body>
 </html>

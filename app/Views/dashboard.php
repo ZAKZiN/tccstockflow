@@ -29,6 +29,22 @@
                 </div>
             <?php endif; ?>
 
+            <?php if(!empty($stats['estoque_critico_list'])): ?>
+                <div class="alert alert-error animate-fade-up" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; background-color: rgba(245, 158, 11, 0.15); border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 8px;">
+                    <div style="font-weight: 600; font-size: 1.1rem; color: #d97706;"><i class="ph ph-warning-circle"></i> Atenção: Estoque Crítico!</div>
+                    <div style="color: var(--text-primary);">Você possui <?= count($stats['estoque_critico_list']) ?> produto(s) no estoque mínimo ou abaixo. É hora de fazer novas requisições!</div>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem; list-style-type: disc; color: var(--text-secondary);">
+                        <?php foreach($stats['estoque_critico_list'] as $ec): ?>
+                            <li>
+                                <strong style="color: var(--text-primary);"><?= htmlspecialchars($ec['nome_produto']) ?></strong> - 
+                                Atual: <strong style="color: #ef4444;"><?= $ec['quantidade_estoque'] ?></strong> 
+                                (Mínimo: <?= $ec['estoque_minimo'] ?>)
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
+
             <div class="stats-grid">
                 <div class="stat-card glass-panel animate-fade-up delay-100">
                     <div class="stat-icon icon-blue">
