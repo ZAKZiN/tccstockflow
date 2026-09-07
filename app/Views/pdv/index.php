@@ -281,22 +281,7 @@
         atualizarCarrinho();
     });
 
-    // Scanner
-    let html5QrcodeScanner;
-    document.getElementById('scannerModal').addEventListener('shown.bs.modal', function () {
-        html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 100} }, false);
-        html5QrcodeScanner.render((decodedText) => {
-            document.getElementById('codigoBusca').value = decodedText;
-            document.getElementById('closeScanner').click();
-            document.getElementById('codigoBusca').dispatchEvent(new Event('input'));
-        });
-    });
-
-    document.getElementById('scannerModal').addEventListener('hidden.bs.modal', function () {
-        if (html5QrcodeScanner) {
-            html5QrcodeScanner.clear();
-        }
-    });
+    // O código do Scanner de Câmera foi unificado mais abaixo.
 
     // Finalizar Venda
     document.getElementById('btnFinalizar').addEventListener('click', async () => {

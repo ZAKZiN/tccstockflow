@@ -48,7 +48,6 @@
                 <?php endif; ?>
 
                 <?php if(in_array($nivel, ['Administrador'])): ?>
-                    <li class="animate-fade-up delay-300"><a href="/clientes" class="<?= strpos($uri, '/clientes') === 0 ? 'active' : '' ?>"><i class="ph ph-users"></i> Clientes</a></li>
                     <li class="animate-fade-up delay-350"><a href="/usuarios" class="<?= strpos($uri, '/usuarios') === 0 ? 'active' : '' ?>"><i class="ph ph-identification-card"></i> Usuários</a></li>
                 <?php endif; ?>
 
