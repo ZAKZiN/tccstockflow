@@ -25,14 +25,14 @@ class UsuarioController {
         $nivel = $_POST['nivel_acesso'] ?? 'Estoquista';
         
         if (empty($nome) || empty($login) || empty($senha)) {
-            $this->redirect('/usuarios?error=' . urlencode('Preencha todos os campos obrigatórios.'));
-            return;
+            header('Location: /usuarios?error=' . urlencode('Preencha todos os campos obrigatórios.'));
+            exit;
         }
 
         // Cibersegurança: Política de Senha Forte
         if (strlen($senha) < 8 || !preg_match('/[A-Za-z]/', $senha) || !preg_match('/[0-9]/', $senha)) {
-            $this->redirect('/usuarios?error=' . urlencode('A senha deve ter no mínimo 8 caracteres, incluindo letras e números.'));
-            return;
+            header('Location: /usuarios?error=' . urlencode('A senha deve ter no mínimo 8 caracteres, incluindo letras e números.'));
+            exit;
         }
         
         $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
