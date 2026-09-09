@@ -25,17 +25,17 @@ class Produto {
                 VALUES (:nome_produto, :codigo_barras, :sku, :id_categoria, :preco_custo, :preco_venda, :quantidade_estoque, :estoque_minimo, :lote, :data_validade)";
         
         $stmt = $db->prepare($sql);
-        $stmt->bindParam(':nome_produto', $dados['nome_produto']);
-        $stmt->bindParam(':codigo_barras', $dados['codigo_barras']);
-        $stmt->bindParam(':sku', $dados['sku']);
-        $stmt->bindParam(':id_categoria', $dados['id_categoria']);
-        $stmt->bindParam(':preco_custo', $dados['preco_custo']);
-        $stmt->bindParam(':preco_venda', $dados['preco_venda']);
-        $stmt->bindParam(':quantidade_estoque', $dados['quantidade_estoque']);
-        $stmt->bindParam(':estoque_minimo', $dados['estoque_minimo']);
-        $stmt->bindParam(':lote', $dados['lote']);
-        $stmt->bindParam(':data_validade', $dados['data_validade']);
-        
-        return $stmt->execute();
+        return $stmt->execute([
+            ':nome_produto' => $dados['nome_produto'],
+            ':codigo_barras' => $dados['codigo_barras'],
+            ':sku' => $dados['sku'],
+            ':id_categoria' => $dados['id_categoria'],
+            ':preco_custo' => $dados['preco_custo'],
+            ':preco_venda' => $dados['preco_venda'],
+            ':quantidade_estoque' => $dados['quantidade_estoque'],
+            ':estoque_minimo' => $dados['estoque_minimo'],
+            ':lote' => $dados['lote'],
+            ':data_validade' => $dados['data_validade']
+        ]);
     }
 }
