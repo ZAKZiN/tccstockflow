@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stockflow-v1';
+const CACHE_NAME = 'stockflow-v2';
 const urlsToCache = [
   '/',
   '/css/style.css',
@@ -18,6 +18,11 @@ self.addEventListener('install', event => {
 self.addEventListener('fetch', event => {
   // Safari bloqueia e dá erro se tentarmos interceptar POST ou requisições de outras origens no SW básico
   if (event.request.method !== 'GET') return;
+
+  // Ignorar requisições de navegação para evitar o erro "Response served by service worker has redirections" no Safari
+  if (event.request.mode === 'navigate') {
+    return;
+  }
 
   event.respondWith(
     caches.match(event.request)

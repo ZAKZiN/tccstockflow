@@ -12,7 +12,11 @@ class AuthController extends Controller {
         if (isset($_SESSION['usuario_id'])) {
             $this->redirect('/dashboard');
         }
-        $this->view('auth/login');
+        $data = [];
+        if (isset($_GET['error'])) {
+            $data['error'] = $_GET['error'];
+        }
+        $this->view('auth/login', $data);
     }
 
     public function login() {
