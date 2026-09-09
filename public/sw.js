@@ -1,6 +1,5 @@
-const CACHE_NAME = 'stockflow-v2';
+const CACHE_NAME = 'stockflow-v3';
 const urlsToCache = [
-  '/',
   '/css/style.css',
   '/css/dark-mode.css',
   '/manifest.json'
@@ -13,13 +12,27 @@ self.addEventListener('install', event => {
         return cache.addAll(urlsToCache);
       })
   );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
-  // Safari bloqueia e dá erro se tentarmos interceptar POST ou requisições de outras origens no SW básico
   if (event.request.method !== 'GET') return;
 
-  // Ignorar requisições de navegação para evitar o erro "Response served by service worker has redirections" no Safari
   if (event.request.mode === 'navigate') {
     return;
   }
@@ -30,7 +43,6 @@ self.addEventListener('fetch', event => {
         return response || fetch(event.request);
       })
       .catch(() => {
-        // Fallback passivo para não quebrar a página no Safari se falhar a rede
         return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
       })
   );

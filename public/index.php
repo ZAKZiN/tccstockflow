@@ -85,8 +85,8 @@ function checkAccess($allowedRoles) {
 $router->before('POST', '/.*', function() {
     // Ignorar webhook/api do pdv e login temporariamente ou forçar nelas tbm
     $uri = $_SERVER['REQUEST_URI'];
-    if (strpos($uri, '/pdv/finalizar') !== false) {
-        // PDV finalizar usa JSON POST, vamos validar no controller ou ignorar por enquanto
+    if (strpos($uri, '/pdv/finalizar') !== false || strpos($uri, '/api/notificacoes/ler') !== false) {
+        // Ignora webhook/api do pdv e leitura de notificação por enquanto
         return; 
     }
     
