@@ -112,6 +112,8 @@
                       <select name="nivel_acesso" required>
                           <option value="Operador de Caixa">Operador de Caixa (Só Vendas e Fiado)</option>
                           <option value="Estoquista">Estoquista (Só Estoque e Compras)</option>
+                          <option value="Solicitante">Solicitante (Apenas criar requisições)</option>
+                          <option value="Coordenador">Coordenador (Aprovar requisições do Setor)</option>
                           <option value="Gerente">Gerente (Acesso aos Dashboards e Lojas)</option>
                           <option value="Administrador">Administrador (Acesso Total)</option>
                       </select>

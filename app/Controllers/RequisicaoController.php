@@ -102,4 +102,65 @@ class RequisicaoController extends Controller {
         );
         $this->redirect('/requisicoes');
     }
+
+    public function despachar($id) {
+        if (!isset($_SESSION['usuario_id'])) {
+            $this->redirect('/dashboard');
+        }
+        
+        $db = \App\Core\Database::getConnection();
+        
+        // Buscar a requisição
+        $stmt = $db->prepare("SELECT * FROM requisicoes WHERE id_requisicao = ?");
+        $stmt->execute([$id]);
+        $req = $stmt->fetch(\PDO::FETCH_ASSOC);
+        
+        if ($req) {
+            try {
+                $db->beginTransaction();
+                
+                // Mudar status para Despachado
+                $stmtUpdate = $db->prepare("UPDATE requisicoes SET status = 'Despachado' WHERE id_requisicao = ?");
+                $stmtUpdate->execute([$id]);
+                
+                // Tentar encontrar o produto no estoque com o mesmo nome exato
+                $stmtProd = $db->prepare("SELECT id_produto, quantidade_estoque FROM produtos WHERE nome_produto = ? COLLATE NOCASE");
+                $stmtProd->execute([$req['material']]);
+                $produto = $stmtProd->fetch(\PDO::FETCH_ASSOC);
+                
+                if ($produto) {
+                    // Dar baixa no estoque
+                    $novaQtd = $produto['quantidade_estoque'] - $req['quantidade'];
+                    $stmtEstoque = $db->prepare("UPDATE produtos SET quantidade_estoque = ? WHERE id_produto = ?");
+                    $stmtEstoque->execute([$novaQtd, $produto['id_produto']]);
+                    
+                    // Registrar no Kardex
+                    $sqlMov = "INSERT INTO movimentacoes_estoque (id_produto, id_usuario, tipo, quantidade, observacao) VALUES (?, ?, 'Saída', ?, ?)";
+                    $stmtMov = $db->prepare($sqlMov);
+                    $stmtMov->execute([
+                        $produto['id_produto'], 
+                        $_SESSION['usuario_id'], 
+                        $req['quantidade'], 
+                        "Requisição #{$id} despachada ao setor"
+                    ]);
+                }
+                
+                $db->commit();
+                
+                Notificacao::create(
+                    "Requisição Despachada", 
+                    "Sua requisição #{$id} ({$req['material']}) foi despachada.",
+                    null, 
+                    'Solicitante'
+                );
+                
+                $this->redirect('/requisicoes?success=' . urlencode('Requisição despachada com sucesso!'));
+            } catch (\Exception $e) {
+                $db->rollBack();
+                $this->redirect('/requisicoes?error=' . urlencode('Erro ao despachar: ' . $e->getMessage()));
+            }
+        } else {
+            $this->redirect('/requisicoes');
+        }
+    }
 }

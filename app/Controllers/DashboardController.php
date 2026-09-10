@@ -25,7 +25,7 @@ class DashboardController extends Controller {
         
         // Lucro Hoje (Faturamento - Custo)
         $stmtLucro = $db->query("
-            SELECT SUM((vi.preco_unitario - p.preco_custo) * vi.quantidade)
+            SELECT SUM((vi.preco_unitario - IFNULL(p.preco_custo, 0)) * vi.quantidade)
             FROM vendas_itens vi
             JOIN produtos p ON vi.id_produto = p.id_produto
             JOIN vendas v ON vi.id_venda = v.id_venda
@@ -39,13 +39,13 @@ class DashboardController extends Controller {
             FROM vendas 
             WHERE date(data_venda) = date('now', 'localtime')
         ");
-        $vendasHoje = $stmtVendas->fetchColumn();
+        $vendasHoje = $stmtVendas->fetchColumn() ?: 0;
         
         // Estoque Crítico
-        $stmtEstoque = $db->query("SELECT COUNT(*) FROM produtos WHERE quantidade_estoque <= estoque_minimo");
-        $estoqueCritico = $stmtEstoque->fetchColumn();
+        $stmtEstoque = $db->query("SELECT COUNT(*) FROM produtos WHERE quantidade_estoque <= IFNULL(estoque_minimo, 0)");
+        $estoqueCritico = $stmtEstoque->fetchColumn() ?: 0;
 
-        $stmtEstoqueList = $db->query("SELECT nome_produto, quantidade_estoque, estoque_minimo FROM produtos WHERE quantidade_estoque <= estoque_minimo");
+        $stmtEstoqueList = $db->query("SELECT nome_produto, quantidade_estoque, estoque_minimo FROM produtos WHERE quantidade_estoque <= IFNULL(estoque_minimo, 0)");
         $estoqueCriticoList = $stmtEstoqueList->fetchAll(PDO::FETCH_ASSOC);
         
         // Chart 1: Faturamento por Mês (Current Year)
@@ -94,6 +94,7 @@ class DashboardController extends Controller {
         $stmtVencendo = $db->query("SELECT nome_produto, data_validade, quantidade_estoque 
                                     FROM produtos 
                                     WHERE data_validade IS NOT NULL 
+                                    AND data_validade != '' 
                                     AND data_validade <= date('now', '+7 days') 
                                     AND quantidade_estoque > 0
                                     ORDER BY data_validade ASC");

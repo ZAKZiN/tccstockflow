@@ -9,6 +9,18 @@
                 </div>
             </header>
 
+            <?php if(isset($_GET['error'])): ?>
+                <div class="alert alert-error animate-fade-up">
+                    <i class="ph ph-warning-circle"></i> <?= htmlspecialchars($_GET['error']) ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if(isset($_GET['success'])): ?>
+                <div class="alert alert-success animate-fade-up">
+                    <i class="ph ph-check-circle"></i> <?= htmlspecialchars($_GET['success']) ?>
+                </div>
+            <?php endif; ?>
+
             <div class="glass-panel animate-fade-up delay-200" style="padding: 1.5rem;">
                 
                 <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; max-width: 500px;">

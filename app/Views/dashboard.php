@@ -5,7 +5,7 @@
                 <div class="user-profile">
                     <div class="user-info">
                         <strong><?= htmlspecialchars($_SESSION['usuario_nome']) ?></strong>
-                        <span><?= htmlspecialchars($_SESSION['usuario_nivel']) ?> - <?= htmlspecialchars($_SESSION['usuario_setor'] ?? '') ?></span>
+                        <span><?= htmlspecialchars($_SESSION['usuario_nivel']) ?><?= !empty($_SESSION['usuario_setor']) ? ' - ' . htmlspecialchars($_SESSION['usuario_setor']) : '' ?></span>
                     </div>
                     <div class="avatar">
                         <?= substr(htmlspecialchars($_SESSION['usuario_nome']), 0, 1) ?>

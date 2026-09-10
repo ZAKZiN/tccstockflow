@@ -103,7 +103,7 @@ $router->before('GET|POST', '/caixa.*', function() { checkAccess(['Administrador
 $router->before('GET|POST', '/estoque.*', function() { checkAccess(['Administrador', 'Gerente', 'Estoquista']); });
 $router->before('GET|POST', '/fornecedores.*', function() { checkAccess(['Administrador', 'Gerente', 'Estoquista']); });
 $router->before('GET|POST', '/compras.*', function() { checkAccess(['Administrador', 'Gerente', 'Estoquista']); });
-$router->before('GET|POST', '/requisicoes.*', function() { checkAccess(['Administrador', 'Gerente', 'Estoquista']); });
+$router->before('GET|POST', '/requisicoes.*', function() { checkAccess(['Administrador', 'Gerente', 'Estoquista', 'Coordenador', 'Solicitante']); });
 $router->before('GET|POST', '/pdv.*', function() { checkAccess(['Administrador', 'Gerente', 'Operador de Caixa']); });
 $router->before('GET|POST', '/fiado.*', function() { checkAccess(['Administrador', 'Gerente', 'Operador de Caixa']); });
 $router->before('GET|POST', '/auditoria.*', function() { checkAccess(['Administrador']); });
@@ -155,6 +155,7 @@ $router->get('/requisicoes/nova', RequisicaoController::class . '@create');
 $router->post('/requisicoes/nova', RequisicaoController::class . '@create');
 $router->get('/requisicoes/aprovar/(\d+)', RequisicaoController::class . '@approve');
 $router->get('/requisicoes/recusar/(\d+)', RequisicaoController::class . '@reject');
+$router->get('/requisicoes/despachar/(\d+)', RequisicaoController::class . '@despachar');
 
 // Estoque
 $router->get('/estoque', EstoqueController::class . '@index');

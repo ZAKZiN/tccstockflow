@@ -123,9 +123,13 @@ class EstoqueController extends Controller {
                 'lote' => null,
                 'data_validade' => !empty($_POST['data_validade']) ? $_POST['data_validade'] : null
             ];
-            
-            Produto::create($dados);
-            $this->redirect('/estoque');
+            try {
+                Produto::create($dados);
+                $this->redirect('/estoque');
+            } catch (\Exception $e) {
+                // If there's an error (e.g. duplicate barcode, invalid date format on db level)
+                $this->redirect('/estoque?error=' . urlencode('Erro ao cadastrar produto: ' . $e->getMessage()));
+            }
         }
     }
 

@@ -9,6 +9,18 @@
                 </div>
             </header>
 
+            <?php if(isset($_GET['error'])): ?>
+                <div class="alert alert-error animate-fade-up">
+                    <i class="ph ph-warning-circle"></i> <?= htmlspecialchars($_GET['error']) ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if(isset($_GET['success'])): ?>
+                <div class="alert alert-success animate-fade-up">
+                    <i class="ph ph-check-circle"></i> <?= htmlspecialchars($_GET['success']) ?>
+                </div>
+            <?php endif; ?>
+
             <div class="glass-panel animate-fade-up delay-200" style="padding: 1.5rem;">
                 <div class="table-container">
                     <table>
@@ -38,7 +50,7 @@
                                         <td style="font-weight: 500; color: var(--text-primary);"><?= htmlspecialchars($req['material']) ?></td>
                                         <td><?= $req['quantidade'] ?></td>
                                         <td><?= htmlspecialchars($req['solicitante']) ?></td>
-                                        <td><?= htmlspecialchars($req['nome_setor']) ?></td>
+                                        <td style="font-weight: 600; color: var(--text-primary);"><i class="ph ph-buildings"></i> <?= htmlspecialchars($req['nome_setor']) ?></td>
                                         <td>
                                             <?php 
                                                 $s = $req['status'];
@@ -46,13 +58,17 @@
                                                 if(strpos($s, 'Aprovado') !== false || strpos($s, 'Efetuada') !== false || strpos($s, 'Despachado') !== false) $badgeClass = 'badge-success';
                                                 if($s == 'Recusado') $badgeClass = 'badge-danger';
                                             ?>
-                                            <span class="badge <?= $badgeClass ?>"><?= $s ?></span>
+                                            <span class="badge <?= $badgeClass ?>" style="font-size: 0.85rem; padding: 0.35rem 0.65rem;"><?= $s ?></span>
                                         </td>
                                         <td style="color: var(--text-secondary);"><?= date('d/m/Y', strtotime($req['data_solicitacao'])) ?></td>
-                                        <td>
-                                            <?php if($req['status'] === 'Pendente Coordenador' && $_SESSION['usuario_nivel'] === 'Coordenador'): ?>
-                                                <a href="/requisicoes/aprovar/<?= $req['id_requisicao'] ?>" class="btn" style="background-color: var(--success-bg); color: var(--success); padding: 0.25rem 0.5rem; font-size: 0.75rem;">Aprovar</a>
-                                                <a href="/requisicoes/recusar/<?= $req['id_requisicao'] ?>" class="btn" style="background-color: var(--danger-bg); color: var(--danger); padding: 0.25rem 0.5rem; font-size: 0.75rem;">Recusar</a>
+                                        <td style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                            <?php if($req['status'] === 'Pendente Coordenador' && in_array($_SESSION['usuario_nivel'], ['Coordenador', 'Administrador'])): ?>
+                                                <a href="/requisicoes/aprovar/<?= $req['id_requisicao'] ?>" class="btn" style="background-color: var(--success-bg); color: var(--success); padding: 0.25rem 0.5rem; font-size: 0.75rem;"><i class="ph ph-check"></i> Aprovar</a>
+                                                <a href="/requisicoes/recusar/<?= $req['id_requisicao'] ?>" class="btn" style="background-color: var(--danger-bg); color: var(--danger); padding: 0.25rem 0.5rem; font-size: 0.75rem;"><i class="ph ph-x"></i> Recusar</a>
+                                            <?php endif; ?>
+                                            
+                                            <?php if(in_array($req['status'], ['Pendente Almoxarifado', 'Compra Efetuada']) && in_array($_SESSION['usuario_nivel'], ['Estoquista', 'Administrador'])): ?>
+                                                <a href="/requisicoes/despachar/<?= $req['id_requisicao'] ?>" class="btn" style="background-color: var(--accent-light); color: var(--accent-color); padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="return confirm('Isso dará baixa no estoque do item solicitado. Confirmar?');"><i class="ph ph-package"></i> Despachar</a>
                                             <?php endif; ?>
                                         </td>
                                     </tr>

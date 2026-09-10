@@ -49,13 +49,14 @@ class UsuarioController {
         
         $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
         
-        $stmt = $db->prepare("INSERT INTO usuarios (nome, login, senha, nivel_acesso) VALUES (?, ?, ?, ?)");
-        
         try {
+            $stmt = $db->prepare("INSERT INTO usuarios (nome, login, senha, nivel_acesso) VALUES (?, ?, ?, ?)");
             $stmt->execute([$nome, $login, $senhaHash, $nivel]);
             header('Location: /usuarios?success=Usuário cadastrado com sucesso!');
+        } catch (\PDOException $e) {
+            header('Location: /usuarios?error=' . urlencode('Erro no banco: ' . $e->getMessage()));
         } catch (\Exception $e) {
-            header('Location: /usuarios?error=Erro ao cadastrar usuário.');
+            header('Location: /usuarios?error=' . urlencode('Erro ao cadastrar usuário: ' . $e->getMessage()));
         }
         exit;
     }
