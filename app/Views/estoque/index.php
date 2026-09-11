@@ -131,10 +131,7 @@
                           <label>Código de Barras</label>
                           <input type="text" name="codigo_barras" placeholder="EAN-13 ou EAN-8">
                       </div>
-                      <div class="input-group">
-                          <label>Categoria (ID)</label>
-                          <input type="number" name="id_categoria" placeholder="Ex: 1">
-                      </div>
+
                       <div class="input-group">
                           <label>Preço de Custo (R$)</label>
                           <input type="number" step="0.01" name="preco_custo" placeholder="0.00">
