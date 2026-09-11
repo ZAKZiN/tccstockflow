@@ -95,6 +95,12 @@
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>
+                            <tr id="noResultsRow" style="display: none;">
+                                <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                                    <i class="ph ph-magnifying-glass" style="font-size: 2rem; opacity: 0.5; margin-bottom: 0.5rem; display: block;"></i>
+                                    Nenhum produto encontrado na pesquisa.
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -168,15 +174,22 @@
         // Filtro da tabela
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const term = e.target.value.toLowerCase();
+            let hasVisible = false;
             document.querySelectorAll('.produto-row').forEach(row => {
                 const id = row.querySelector('.prod-id').innerText.toLowerCase();
                 const nome = row.querySelector('.prod-nome').innerText.toLowerCase();
                 if (id.includes(term) || nome.includes(term)) {
                     row.style.display = '';
+                    hasVisible = true;
                 } else {
                     row.style.display = 'none';
                 }
             });
+            
+            const noResults = document.getElementById('noResultsRow');
+            if (noResults) {
+                noResults.style.display = hasVisible ? 'none' : '';
+            }
         });
 
         // Lógica do Scanner
