@@ -111,9 +111,14 @@ class EstoqueController extends Controller {
         }
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $codigoBarras = trim($_POST['codigo_barras'] ?? '');
+            if (empty($codigoBarras)) {
+                $codigoBarras = 'CB' . strtoupper(substr(uniqid(), -8));
+            }
+
             $dados = [
                 'nome_produto' => $_POST['nome_produto'] ?? '',
-                'codigo_barras' => !empty($_POST['codigo_barras']) ? trim($_POST['codigo_barras']) : 'CB' . strtoupper(substr(uniqid(), -8)),
+                'codigo_barras' => $codigoBarras,
                 'sku' => 'SKU' . strtoupper(substr(uniqid(), -8)),
                 'id_categoria' => !empty($_POST['id_categoria']) ? $_POST['id_categoria'] : null,
                 'preco_custo' => !empty($_POST['preco_custo']) ? $_POST['preco_custo'] : 0,
@@ -127,8 +132,11 @@ class EstoqueController extends Controller {
                 Produto::create($dados);
                 $this->redirect('/estoque');
             } catch (\Exception $e) {
-                // If there's an error (e.g. duplicate barcode, invalid date format on db level)
-                $this->redirect('/estoque?error=' . urlencode('Erro ao cadastrar produto: ' . $e->getMessage()));
+                $errorMsg = $e->getMessage();
+                if (strpos($errorMsg, 'UNIQUE constraint failed: produtos.codigo_barras') !== false) {
+                    $errorMsg = "Já existe um produto cadastrado com este Código de Barras.";
+                }
+                $this->redirect('/estoque?error=' . urlencode('Erro ao cadastrar produto: ' . $errorMsg));
             }
         }
     }
