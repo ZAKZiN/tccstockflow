@@ -113,8 +113,8 @@ class EstoqueController extends Controller {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $dados = [
                 'nome_produto' => $_POST['nome_produto'] ?? '',
-                'codigo_barras' => !empty($_POST['codigo_barras']) ? $_POST['codigo_barras'] : null,
-                'sku' => null,
+                'codigo_barras' => !empty($_POST['codigo_barras']) ? trim($_POST['codigo_barras']) : 'CB' . strtoupper(substr(uniqid(), -8)),
+                'sku' => 'SKU' . strtoupper(substr(uniqid(), -8)),
                 'id_categoria' => !empty($_POST['id_categoria']) ? $_POST['id_categoria'] : null,
                 'preco_custo' => !empty($_POST['preco_custo']) ? $_POST['preco_custo'] : 0,
                 'preco_venda' => !empty($_POST['preco_venda']) ? $_POST['preco_venda'] : 0,
