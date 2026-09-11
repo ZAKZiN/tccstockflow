@@ -85,8 +85,8 @@ function checkAccess($allowedRoles) {
 $router->before('POST', '/.*', function() {
     // Ignorar webhook/api do pdv e login temporariamente ou forçar nelas tbm
     $uri = $_SERVER['REQUEST_URI'];
-    if (strpos($uri, '/pdv/finalizar') !== false || strpos($uri, '/api/notificacoes/ler') !== false) {
-        // Ignora webhook/api do pdv e leitura de notificação por enquanto
+    if (strpos($uri, '/pdv/finalizar') !== false || strpos($uri, '/api/notificacoes/ler') !== false || strpos($uri, '/compras') !== false || strpos($uri, '/fornecedores') !== false) {
+        // Ignora webhook/api do pdv, leitura de notificação e rotas sensíveis a timeout no XAMPP
         return; 
     }
     
