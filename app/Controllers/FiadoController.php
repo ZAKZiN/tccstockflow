@@ -35,9 +35,13 @@ class FiadoController extends Controller {
         }
         
         $db = Database::getConnection();
-        $stmt = $db->prepare("UPDATE contas_receber SET status = 'Pago', valor_pago = valor_total WHERE id_conta = ?");
-        $stmt->execute([$id]);
         
-        $this->redirect('/fiado');
+        try {
+            $stmt = $db->prepare("UPDATE contas_receber SET status = 'Pago', valor_pago = valor_total WHERE id_conta = ?");
+            $stmt->execute([$id]);
+            $this->redirect('/fiado?success=Conta paga com sucesso!');
+        } catch (\Exception $e) {
+            $this->redirect('/fiado?error=' . urlencode('Erro ao processar pagamento.'));
+        }
     }
 }

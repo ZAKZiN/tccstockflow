@@ -47,8 +47,6 @@ class UsuarioController {
             exit;
         }
         
-        $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
-        
         try {
             $stmt = $db->prepare("INSERT INTO usuarios (nome, login, senha, nivel_acesso) VALUES (?, ?, ?, ?)");
             $stmt->execute([$nome, $login, $senhaHash, $nivel]);

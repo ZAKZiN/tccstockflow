@@ -21,6 +21,25 @@
                 localStorage.setItem('lgpd_accepted', 'true');
                 document.getElementById('cookieBanner').style.display = 'none';
             });
+            
+            // Prevenção Global de Duplo Clique (Double Submit)
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function() {
+                    const btns = this.querySelectorAll('button[type="submit"]');
+                    btns.forEach(btn => {
+                        if (!btn.hasAttribute('data-no-disable')) {
+                            btn.disabled = true;
+                            const originalText = btn.innerHTML;
+                            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Aguarde...';
+                            // Restaura caso a página não recarregue (ex: erro de validação nativa)
+                            setTimeout(() => {
+                                btn.disabled = false;
+                                btn.innerHTML = originalText;
+                            }, 4000);
+                        }
+                    });
+                });
+            });
         });
     </script>
     

@@ -75,17 +75,19 @@ class RequisicaoController extends Controller {
             $this->redirect('/dashboard');
         }
         
-        // Passa para o próximo status
-        Requisicao::updateStatus($id, 'Pendente Almoxarifado');
-        
-        Notificacao::create(
-            "Requisição Aprovada", 
-            "A requisição #{$id} foi aprovada e enviada ao Almoxarifado.",
-            null, 
-            'Almoxarife'
-        );
-        
-        $this->redirect('/requisicoes');
+        try {
+            Requisicao::updateStatus($id, 'Pendente Almoxarifado');
+            
+            Notificacao::create(
+                "Requisição Aprovada", 
+                "A requisição #{$id} foi aprovada e enviada ao Almoxarifado.",
+                null, 
+                'Almoxarife'
+            );
+            $this->redirect('/requisicoes?success=' . urlencode('Requisição aprovada.'));
+        } catch (\Exception $e) {
+            $this->redirect('/requisicoes?error=' . urlencode('Erro ao aprovar requisição.'));
+        }
     }
 
     public function reject($id) {
@@ -93,14 +95,18 @@ class RequisicaoController extends Controller {
             $this->redirect('/dashboard');
         }
         
-        Requisicao::updateStatus($id, 'Recusado');
-        Notificacao::create(
-            "Requisição Recusada", 
-            "A requisição #{$id} foi recusada pelo Coordenador.",
-            null, 
-            'Solicitante'
-        );
-        $this->redirect('/requisicoes');
+        try {
+            Requisicao::updateStatus($id, 'Recusado');
+            Notificacao::create(
+                "Requisição Recusada", 
+                "A requisição #{$id} foi recusada pelo Coordenador.",
+                null, 
+                'Solicitante'
+            );
+            $this->redirect('/requisicoes?success=' . urlencode('Requisição recusada.'));
+        } catch (\Exception $e) {
+            $this->redirect('/requisicoes?error=' . urlencode('Erro ao recusar requisição.'));
+        }
     }
 
     public function despachar($id) {

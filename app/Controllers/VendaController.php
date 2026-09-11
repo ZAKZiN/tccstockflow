@@ -46,18 +46,13 @@ class VendaController extends Controller {
         $json = file_get_contents('php://input');
         $data = json_decode($json, true);
         
-        if (!$data || empty($data['itens'])) {
+        if (!$data || !isset($data['carrinho']) || count($data['carrinho']) === 0) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Nenhum item na venda.']);
-            return;
-        }
-
-        $input = json_decode(file_get_contents('php://input'), true);
-        
-        if (!$input || !isset($input['carrinho']) || count($input['carrinho']) === 0) {
             echo json_encode(['success' => false, 'message' => 'Carrinho vazio']);
             return;
         }
+
+        $input = $data;
 
         $idCliente = $input['id_cliente'] ?? 1; // 1 = Cliente Padrão
         $metodoPagamento = $input['metodo_pagamento'] ?? 'Dinheiro';

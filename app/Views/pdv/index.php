@@ -63,7 +63,7 @@
                     <label class="form-label">Cliente</label>
                     <select id="clienteSelect" class="form-select">
                         <?php foreach($clientes as $cli): ?>
-                            <option value="<?= $cli['id_cliente'] ?>" data-phone="<?= $cli['telefone'] ?>"><?= $cli['nome'] ?></option>
+                            <option value="<?= $cli['id_cliente'] ?>" data-phone="<?= $cli['telefone'] ?>"><?= htmlspecialchars($cli['nome']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>

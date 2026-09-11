@@ -105,9 +105,9 @@ class DashboardController extends Controller {
             'lucro_hoje' => $lucroHoje,
             'vendas_hoje' => $vendasHoje,
             'estoque_critico' => $estoqueCritico,
-            'chart_mensal' => json_encode($chartMensal),
-            'chart_top_labels' => json_encode($produtosNomes),
-            'chart_top_data' => json_encode($produtosTotais),
+            'chart_mensal' => json_encode($chartMensal, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
+            'chart_top_labels' => json_encode($produtosNomes, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
+            'chart_top_data' => json_encode($produtosTotais, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
             'top_produtos_list' => $topProdutosList,
             'vencendo' => $vencendo,
             'estoque_critico_list' => $estoqueCriticoList
