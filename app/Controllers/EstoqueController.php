@@ -125,6 +125,8 @@ class EstoqueController extends Controller {
                 $codigoBarras = 'CB' . strtoupper(substr(uniqid(), -8));
             }
 
+            $qtdInicial = (int)($_POST['quantidade_estoque'] ?? 0);
+
             $dados = [
                 'nome_produto' => $_POST['nome_produto'] ?? '',
                 'codigo_barras' => $codigoBarras,
@@ -132,13 +134,18 @@ class EstoqueController extends Controller {
                 'id_categoria' => !empty($_POST['id_categoria']) ? $_POST['id_categoria'] : null,
                 'preco_custo' => !empty($_POST['preco_custo']) ? $_POST['preco_custo'] : 0,
                 'preco_venda' => !empty($_POST['preco_venda']) ? $_POST['preco_venda'] : 0,
-                'quantidade_estoque' => 0,
+                'quantidade_estoque' => $qtdInicial,
                 'estoque_minimo' => !empty($_POST['estoque_minimo']) ? $_POST['estoque_minimo'] : 0,
                 'lote' => null,
                 'data_validade' => !empty($_POST['data_validade']) ? $_POST['data_validade'] : null
             ];
             try {
-                Produto::create($dados);
+                $idProduto = Produto::create($dados);
+                if ($idProduto && $qtdInicial > 0) {
+                    $db = \App\Core\Database::getConnection();
+                    $stmtMov = $db->prepare("INSERT INTO movimentacoes_estoque (id_produto, id_usuario, tipo, quantidade, observacao) VALUES (?, ?, 'Entrada', ?, 'Saldo Inicial (Cadastro)')");
+                    $stmtMov->execute([$idProduto, $_SESSION['usuario_id'], $qtdInicial]);
+                }
                 $this->redirect('/estoque');
             } catch (\Exception $e) {
                 $errorMsg = $e->getMessage();

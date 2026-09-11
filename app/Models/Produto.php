@@ -25,7 +25,7 @@ class Produto {
                 VALUES (:nome_produto, :codigo_barras, :sku, :id_categoria, :preco_custo, :preco_venda, :quantidade_estoque, :estoque_minimo, :lote, :data_validade)";
         
         $stmt = $db->prepare($sql);
-        return $stmt->execute([
+        if ($stmt->execute([
             ':nome_produto' => $dados['nome_produto'],
             ':codigo_barras' => $dados['codigo_barras'],
             ':sku' => $dados['sku'],
@@ -36,6 +36,9 @@ class Produto {
             ':estoque_minimo' => $dados['estoque_minimo'],
             ':lote' => $dados['lote'],
             ':data_validade' => $dados['data_validade']
-        ]);
+        ])) {
+            return $db->lastInsertId();
+        }
+        return false;
     }
 }

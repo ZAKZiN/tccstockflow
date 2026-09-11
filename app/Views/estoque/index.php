@@ -145,6 +145,10 @@
                           <input type="number" name="estoque_minimo" placeholder="Ex: 10">
                       </div>
                       <div class="input-group">
+                          <label>Qtd Inicial (Estoque)</label>
+                          <input type="number" name="quantidade_estoque" placeholder="Ex: 50" min="0">
+                      </div>
+                      <div class="input-group">
                           <label>Data de Validade (Opcional)</label>
                           <input type="date" name="data_validade">
                       </div>
