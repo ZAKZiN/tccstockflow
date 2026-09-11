@@ -135,6 +135,10 @@ class RequisicaoController extends Controller {
                 $produto = $stmtProd->fetch(\PDO::FETCH_ASSOC);
                 
                 if ($produto) {
+                    if ($produto['quantidade_estoque'] < $req['quantidade']) {
+                        throw new \Exception("Estoque insuficiente para despachar. (Atual: {$produto['quantidade_estoque']})");
+                    }
+                    
                     // Dar baixa no estoque
                     $novaQtd = $produto['quantidade_estoque'] - $req['quantidade'];
                     $stmtEstoque = $db->prepare("UPDATE produtos SET quantidade_estoque = ? WHERE id_produto = ?");

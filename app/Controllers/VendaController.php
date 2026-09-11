@@ -94,9 +94,17 @@ class VendaController extends Controller {
             $stmtUpdateEstoque = $db->prepare("UPDATE produtos SET quantidade_estoque = quantidade_estoque - ? WHERE id_produto = ?");
             $stmtMovimentacao = $db->prepare("INSERT INTO movimentacoes_estoque (id_produto, id_usuario, tipo, quantidade, observacao) VALUES (?, ?, 'Saída', ?, ?)");
 
+            $stmtCheckEstoque = $db->prepare("SELECT nome_produto, quantidade_estoque FROM produtos WHERE id_produto = ?");
+
             $idUsuario = $_SESSION['usuario_id'];
 
             foreach ($carrinho as $item) {
+                $stmtCheckEstoque->execute([$item['id']]);
+                $prodData = $stmtCheckEstoque->fetch(PDO::FETCH_ASSOC);
+                if ($prodData && $prodData['quantidade_estoque'] < $item['quantidade']) {
+                    throw new \Exception("Estoque insuficiente para vender '{$prodData['nome_produto']}'. (Atual: {$prodData['quantidade_estoque']})");
+                }
+
                 $stmtItem->execute([$idVenda, $item['id'], $item['quantidade'], $item['preco']]);
                 $stmtUpdateEstoque->execute([$item['quantidade'], $item['id']]);
                 

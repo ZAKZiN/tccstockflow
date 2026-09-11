@@ -86,7 +86,16 @@ class EstoqueController extends Controller {
                 
                 // Atualizar Estoque
                 $sinal = ($tipo === 'Entrada') ? '+' : '-';
-                if ($tipo === 'Transferência') { $sinal = '-'; } // Transferência = Saída para outro lugar
+                if ($tipo === 'Transferência' || $tipo === 'Saída') { 
+                    $sinal = '-';
+                    // Check if stock is sufficient
+                    $stmtCheck = $db->prepare("SELECT quantidade_estoque FROM produtos WHERE id_produto = ?");
+                    $stmtCheck->execute([$idProduto]);
+                    $qtdAtual = $stmtCheck->fetchColumn();
+                    if ($qtdAtual < $quantidade) {
+                        throw new \Exception("Estoque insuficiente para a operação. (Atual: {$qtdAtual})");
+                    }
+                }
                 
                 $sqlEstoque = "UPDATE produtos SET quantidade_estoque = quantidade_estoque $sinal ? WHERE id_produto = ?";
                 $stmtEstq = $db->prepare($sqlEstoque);
