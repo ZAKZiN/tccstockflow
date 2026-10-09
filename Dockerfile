@@ -7,9 +7,10 @@ RUN a2enmod rewrite
 RUN apt-get update && apt-get install -y \
     sqlite3 \
     libsqlite3-dev \
+    libpq-dev \
     git \
     unzip \
-    && docker-php-ext-install pdo pdo_sqlite
+    && docker-php-ext-install pdo pdo_sqlite pdo_pgsql pgsql
 
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
