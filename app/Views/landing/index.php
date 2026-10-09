@@ -1,39 +1,45 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="scroll-smooth">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockFlow | O Sistema de PDV e Estoque que blinda o seu negócio</title>
+    <title>StockFlow | Sistema de Gestão e PDV</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Usando a mesma fonte do sistema -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #111827; }
+        .glass-panel {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 antialiased overflow-x-hidden">
+<body class="antialiased overflow-x-hidden">
 
     <!-- Navbar -->
-    <nav class="fixed w-full bg-white/90 backdrop-blur-md z-50 border-b border-gray-100 shadow-sm">
+    <nav class="bg-white border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-20 items-center">
+            <div class="flex justify-between h-16 items-center">
                 <div class="flex items-center gap-2">
-                    <i class="ph-fill ph-package text-indigo-600 text-3xl"></i>
-                    <span class="font-extrabold text-2xl tracking-tight text-indigo-900">StockFlow</span>
+                    <i class="ph-fill ph-package text-slate-900 text-2xl"></i>
+                    <span class="font-bold text-xl text-slate-900">StockFlow</span>
                 </div>
                 
                 <div class="hidden md:flex items-center space-x-8">
-                    <a href="#funcionalidades" class="text-gray-600 hover:text-indigo-600 font-medium transition-colors">Funcionalidades</a>
-                    <a href="#seguranca" class="text-gray-600 hover:text-indigo-600 font-medium transition-colors">Segurança</a>
-                    <a href="#precos" class="text-gray-600 hover:text-indigo-600 font-medium transition-colors">Preços</a>
-                    <a href="#contato" class="text-gray-600 hover:text-indigo-600 font-medium transition-colors">Contato</a>
+                    <a href="#funcionalidades" class="text-gray-600 hover:text-slate-900 font-medium text-sm">Funcionalidades</a>
+                    <a href="#seguranca" class="text-gray-600 hover:text-slate-900 font-medium text-sm">Segurança</a>
+                    <a href="#precos" class="text-gray-600 hover:text-slate-900 font-medium text-sm">Preços</a>
                 </div>
 
                 <div class="flex items-center space-x-4">
-                    <a href="/login" class="text-indigo-600 font-semibold hover:text-indigo-800 transition-colors hidden sm:block">Entrar</a>
-                    <a href="/registro" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-6 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2">
-                        Criar Conta <i class="ph ph-arrow-right font-bold"></i>
+                    <a href="/login" class="text-gray-600 font-medium hover:text-slate-900 text-sm hidden sm:block">Acessar Sistema</a>
+                    <a href="/registro" class="bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 px-4 rounded-md text-sm transition-colors shadow-sm flex items-center gap-2">
+                        Criar Conta
                     </a>
                 </div>
             </div>
@@ -41,232 +47,210 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="pt-32 pb-20 lg:pt-48 lg:pb-32 bg-gradient-to-b from-indigo-50 to-white overflow-hidden relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="text-center max-w-4xl mx-auto">
-                <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight mb-8 leading-tight">
-                    O sistema de PDV e Estoque que <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-500">blinda o seu negócio.</span>
+    <section class="pt-16 pb-12 bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto">
+                <h1 class="text-3xl md:text-5xl font-bold text-slate-900 mb-6 leading-tight">
+                    Gestão de Estoque e PDV <br />para o seu negócio
                 </h1>
-                <p class="text-lg md:text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-                    Abandone o caderno e os sistemas lentos. Controle suas vendas, gerencie o fiado e nunca mais perca dinheiro no estoque. Rápido, seguro e nas nuvens.
+                <p class="text-lg text-gray-600 mb-8">
+                    Controle suas vendas, gerencie o fiado e o estoque em um único painel. Uma interface limpa, rápida e construída para a operação diária.
                 </p>
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <a href="/registro" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg py-4 px-8 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/30 transform hover:-translate-y-1">
-                        Testar Grátis por 7 dias
+                    <a href="/registro" class="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 px-6 rounded-md transition-colors shadow-sm">
+                        Testar o Sistema
                     </a>
-                    <a href="#funcionalidades" class="w-full sm:w-auto bg-white hover:bg-gray-50 text-gray-800 font-semibold text-lg py-4 px-8 rounded-xl border border-gray-200 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2">
-                        <i class="ph ph-play-circle text-2xl text-indigo-600"></i> Ver como funciona
+                    <a href="#funcionalidades" class="w-full sm:w-auto bg-white hover:bg-gray-50 text-slate-900 font-medium py-3 px-6 rounded-md border border-gray-300 transition-colors">
+                        Ver Funcionalidades
                     </a>
                 </div>
             </div>
             
-            <!-- Dashboard Mockup Placeholder -->
-            <div class="mt-20 mx-auto max-w-5xl relative">
-                <div class="absolute inset-0 bg-gradient-to-t from-white to-transparent z-10 h-32 bottom-0 top-auto"></div>
-                <div class="bg-white rounded-2xl shadow-2xl shadow-indigo-900/10 border border-gray-100 p-2 overflow-hidden transform hover:scale-[1.01] transition-transform duration-500">
-                    <div class="bg-gray-100 rounded-t-xl h-8 flex items-center px-4 gap-2">
-                        <div class="w-3 h-3 rounded-full bg-red-400"></div>
-                        <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
-                        <div class="w-3 h-3 rounded-full bg-green-400"></div>
+            <!-- System Interface Preview -->
+            <div class="mt-16 mx-auto max-w-4xl glass-panel p-1 rounded-t-xl overflow-hidden shadow-lg">
+                <div class="bg-gray-50 border-b border-gray-200 h-10 flex items-center px-4 gap-2">
+                    <div class="w-3 h-3 rounded-full bg-gray-300"></div>
+                    <div class="w-3 h-3 rounded-full bg-gray-300"></div>
+                    <div class="w-3 h-3 rounded-full bg-gray-300"></div>
+                </div>
+                <!-- Fake Dashboard -->
+                <div class="bg-gray-100 flex p-4 gap-4 h-[300px] md:h-[400px]">
+                    <!-- Sidebar Mock -->
+                    <div class="hidden md:flex w-48 bg-white border border-gray-200 rounded-md flex-col p-4 gap-2">
+                        <div class="h-6 w-24 bg-slate-200 rounded mb-4"></div>
+                        <div class="h-8 w-full bg-slate-100 rounded"></div>
+                        <div class="h-8 w-full bg-gray-50 rounded"></div>
+                        <div class="h-8 w-full bg-gray-50 rounded"></div>
                     </div>
-                    <!-- Fake Dashboard UI -->
-                    <div class="bg-gray-50 h-[400px] md:h-[500px] w-full p-6 flex flex-col gap-6">
-                        <div class="flex justify-between items-center">
-                            <div class="w-48 h-8 bg-gray-200 rounded-md animate-pulse"></div>
-                            <div class="w-32 h-10 bg-indigo-200 rounded-md animate-pulse"></div>
+                    <!-- Main Mock -->
+                    <div class="flex-1 flex flex-col gap-4">
+                        <div class="flex justify-between items-center bg-white p-4 border border-gray-200 rounded-md h-16">
+                            <div class="h-6 w-32 bg-gray-200 rounded"></div>
+                            <div class="h-8 w-8 bg-slate-900 rounded-full"></div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-24 flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center"><i class="ph ph-trend-up text-blue-500 text-xl"></i></div>
-                                <div class="flex-1 space-y-2"><div class="w-20 h-3 bg-gray-200 rounded"></div><div class="w-32 h-5 bg-gray-300 rounded"></div></div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="bg-white p-4 border border-gray-200 rounded-md h-24 flex flex-col justify-center">
+                                <div class="h-4 w-16 bg-gray-200 rounded mb-2"></div>
+                                <div class="h-6 w-24 bg-slate-800 rounded"></div>
                             </div>
-                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-24 flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center"><i class="ph ph-currency-dollar text-green-500 text-xl"></i></div>
-                                <div class="flex-1 space-y-2"><div class="w-20 h-3 bg-gray-200 rounded"></div><div class="w-24 h-5 bg-gray-300 rounded"></div></div>
+                            <div class="bg-white p-4 border border-gray-200 rounded-md h-24 flex flex-col justify-center">
+                                <div class="h-4 w-16 bg-gray-200 rounded mb-2"></div>
+                                <div class="h-6 w-24 bg-emerald-600 rounded"></div>
                             </div>
-                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-24 flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center"><i class="ph ph-package text-purple-500 text-xl"></i></div>
-                                <div class="flex-1 space-y-2"><div class="w-20 h-3 bg-gray-200 rounded"></div><div class="w-16 h-5 bg-gray-300 rounded"></div></div>
+                            <div class="bg-white p-4 border border-gray-200 rounded-md h-24 flex flex-col justify-center">
+                                <div class="h-4 w-16 bg-gray-200 rounded mb-2"></div>
+                                <div class="h-6 w-24 bg-amber-600 rounded"></div>
                             </div>
-                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-24 flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center"><i class="ph ph-users text-orange-500 text-xl"></i></div>
-                                <div class="flex-1 space-y-2"><div class="w-20 h-3 bg-gray-200 rounded"></div><div class="w-12 h-5 bg-gray-300 rounded"></div></div>
+                            <div class="bg-white p-4 border border-gray-200 rounded-md h-24 flex flex-col justify-center">
+                                <div class="h-4 w-16 bg-gray-200 rounded mb-2"></div>
+                                <div class="h-6 w-24 bg-blue-600 rounded"></div>
                             </div>
                         </div>
-                        <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center justify-center">
-                            <div class="text-gray-300 flex flex-col items-center gap-2">
-                                <i class="ph ph-chart-line-up text-6xl"></i>
-                                <span class="font-medium">Gráfico de Faturamento</span>
+                        <div class="bg-white border border-gray-200 rounded-md flex-1 p-4">
+                            <div class="h-4 w-32 bg-gray-200 rounded mb-4"></div>
+                            <div class="space-y-2">
+                                <div class="h-8 w-full bg-gray-50 rounded"></div>
+                                <div class="h-8 w-full bg-gray-50 rounded"></div>
+                                <div class="h-8 w-full bg-gray-50 rounded"></div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Blobs decorativos de fundo -->
-            <div class="absolute top-1/4 left-0 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob -z-10"></div>
-            <div class="absolute top-1/3 right-0 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000 -z-10"></div>
-            <div class="absolute -bottom-8 left-1/2 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000 -z-10"></div>
         </div>
     </section>
 
     <!-- Funcionalidades Grid -->
-    <section id="funcionalidades" class="py-24 bg-white">
+    <section id="funcionalidades" class="py-16 bg-gray-50 border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <span class="text-indigo-600 font-semibold tracking-wider uppercase text-sm">Operação Profissional</span>
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-4">Tudo o que você precisa, em um só lugar.</h2>
-                <p class="text-lg text-gray-600 max-w-2xl mx-auto">Desenvolvido para lojas físicas que precisam de agilidade no balcão e segurança na gestão administrativa.</p>
+            <div class="text-center mb-12">
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">Módulos do Sistema</h2>
+                <p class="text-gray-600">Ferramentas focadas na operação real de balcão.</p>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-                <!-- Card 1 -->
-                <div class="bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:shadow-xl transition-shadow duration-300 group">
-                    <div class="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-indigo-600 transition-colors">
-                        <i class="ph ph-barcode text-3xl text-indigo-600 group-hover:text-white transition-colors"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Frente de Caixa (PDV) Relâmpago</h3>
-                    <p class="text-gray-600 leading-relaxed">Venda em segundos com leitor de código de barras ou teclado. Feito para a correria do balcão, garantindo que o seu cliente não espere na fila.</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-panel p-6">
+                    <i class="ph ph-barcode text-3xl text-slate-900 mb-4"></i>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Frente de Caixa (PDV)</h3>
+                    <p class="text-gray-600 text-sm">Venda ágil com suporte a leitor de código de barras. Interface simplificada para não atrasar a fila.</p>
                 </div>
                 
-                <!-- Card 2 -->
-                <div class="bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:shadow-xl transition-shadow duration-300 group">
-                    <div class="w-14 h-14 bg-emerald-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-emerald-600 transition-colors">
-                        <i class="ph ph-handshake text-3xl text-emerald-600 group-hover:text-white transition-colors"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Controle de 'Fiado' (Crediário)</h3>
-                    <p class="text-gray-600 leading-relaxed">Chega de esquecer quem te deve. Gestão inteligente de contas a receber integrada diretamente ao caixa, com limites por cliente e histórico.</p>
+                <div class="glass-panel p-6">
+                    <i class="ph ph-handshake text-3xl text-slate-900 mb-4"></i>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Controle de Fiado</h3>
+                    <p class="text-gray-600 text-sm">Gestão integrada de crediário. Controle de contas a receber e limites por cliente, direto no momento da venda.</p>
                 </div>
                 
-                <!-- Card 3 -->
-                <div class="bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:shadow-xl transition-shadow duration-300 group">
-                    <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors">
-                        <i class="ph ph-boxes text-3xl text-blue-600 group-hover:text-white transition-colors"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Estoque e Kardex à Prova de Falhas</h3>
-                    <p class="text-gray-600 leading-relaxed">Saiba exatamente o que entra e sai da sua loja. Alertas automáticos de estoque mínimo, controle de lotes, validades e inventário com curva ABC.</p>
+                <div class="glass-panel p-6">
+                    <i class="ph ph-boxes text-3xl text-slate-900 mb-4"></i>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Gestão de Estoque</h3>
+                    <p class="text-gray-600 text-sm">Kardex completo, inventário e controle de requisições. Saiba o que entra e sai da sua loja com precisão.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Segurança Section -->
-    <section id="seguranca" class="py-24 bg-gray-900 text-white relative overflow-hidden">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+    <section id="seguranca" class="py-16 bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                 <div>
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-sm font-semibold mb-6 border border-indigo-500/30">
-                        <i class="ph-fill ph-shield-check"></i> Padrão Bancário
-                    </div>
-                    <h2 class="text-3xl md:text-4xl font-bold mb-6 leading-tight">O Diferencial: Segurança de Dados nível TCC Acadêmico.</h2>
-                    <p class="text-gray-400 text-lg mb-8 leading-relaxed">
-                        Construímos o StockFlow não apenas para ser bonito e rápido, mas para ser uma <strong>fortaleza</strong>.
-                        Com proteção Multi-Tenant isolada por Empresa, criptografia robusta (AES-256) em banco PostgreSQL e total aderência às diretrizes da LGPD, os dados da sua loja e dos seus clientes são invisíveis para invasores.
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Arquitetura de Segurança</h2>
+                    <p class="text-gray-600 mb-6">
+                        Construído com base em diretrizes acadêmicas de cibersegurança, o StockFlow protege os dados da sua empresa contra vazamentos e invasões.
                     </p>
-                    <ul class="space-y-4">
+                    <ul class="space-y-3">
                         <li class="flex items-start gap-3">
-                            <i class="ph-fill ph-check-circle text-emerald-400 text-xl mt-1"></i>
-                            <span class="text-gray-300">Auditoria completa de tudo que ocorre no sistema (Logs de Ação).</span>
+                            <i class="ph-fill ph-check-circle text-emerald-600 text-xl"></i>
+                            <span class="text-gray-700 text-sm"><strong>Multi-Tenant:</strong> Isolamento absoluto dos dados de cada empresa no banco.</span>
                         </li>
                         <li class="flex items-start gap-3">
-                            <i class="ph-fill ph-check-circle text-emerald-400 text-xl mt-1"></i>
-                            <span class="text-gray-300">Isolamento rigoroso de informações: seus dados jamais vazam para concorrentes.</span>
+                            <i class="ph-fill ph-check-circle text-emerald-600 text-xl"></i>
+                            <span class="text-gray-700 text-sm"><strong>Criptografia:</strong> Proteção de ponta a ponta e senhas em Hash seguro.</span>
                         </li>
                         <li class="flex items-start gap-3">
-                            <i class="ph-fill ph-check-circle text-emerald-400 text-xl mt-1"></i>
-                            <span class="text-gray-300">Proteção ativa contra ataques DDoS, Injeções de SQL e CSRF.</span>
+                            <i class="ph-fill ph-check-circle text-emerald-600 text-xl"></i>
+                            <span class="text-gray-700 text-sm"><strong>Auditoria:</strong> Logs de ação completos para rastreabilidade (Em conformidade com a LGPD).</span>
                         </li>
                     </ul>
                 </div>
-                <div class="relative">
-                    <div class="absolute inset-0 bg-gradient-to-r from-indigo-500 to-blue-600 transform skew-y-3 rounded-3xl opacity-20 filter blur-xl"></div>
-                    <div class="bg-gray-800 border border-gray-700 rounded-2xl p-8 relative shadow-2xl">
-                        <div class="flex justify-center mb-6">
-                            <div class="w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center border-4 border-indigo-500/30">
-                                <i class="ph-fill ph-lock-key text-5xl text-indigo-400"></i>
-                            </div>
-                        </div>
-                        <div class="space-y-4 font-mono text-sm">
-                            <div class="bg-gray-900 p-3 rounded border border-gray-700 text-emerald-400">
-                                [AUTH] ✓ Login successful (JWT validation passed)
-                            </div>
-                            <div class="bg-gray-900 p-3 rounded border border-gray-700 text-blue-400">
-                                [QUERY] SELECT * FROM produtos WHERE id_empresa = ***
-                            </div>
-                            <div class="bg-gray-900 p-3 rounded border border-gray-700 text-green-400">
-                                [ENCRYPT] AES-256 payload secured.
-                            </div>
-                        </div>
+                <div class="glass-panel p-6 bg-slate-900 text-gray-300 font-mono text-xs md:text-sm">
+                    <div class="flex gap-2 mb-4 border-b border-slate-700 pb-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
                     </div>
+                    <p><span class="text-emerald-400">INFO</span> Inicializando middleware de isolamento...</p>
+                    <p><span class="text-emerald-400">INFO</span> Tenant ID ativado e verificado.</p>
+                    <p><span class="text-blue-400">QUERY</span> SELECT * FROM produtos WHERE empresa_id = $1;</p>
+                    <p><span class="text-emerald-400">SUCCESS</span> Acesso concedido. Conexão segura estabelecida.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Pricing Section -->
-    <section id="precos" class="py-24 bg-gray-50">
+    <section id="precos" class="py-16 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Planos Simples e Transparentes</h2>
-                <p class="text-lg text-gray-600 max-w-2xl mx-auto">Sem taxas surpresa. Cancele quando quiser.</p>
+            <div class="text-center mb-12">
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">Planos</h2>
+                <p class="text-gray-600">Escolha a solução adequada para o seu comércio.</p>
             </div>
             
-            <div class="flex flex-col md:flex-row justify-center gap-8 max-w-5xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-center gap-6 max-w-4xl mx-auto">
                 <!-- Plano Essencial -->
-                <div class="bg-white rounded-3xl p-8 border border-gray-200 shadow-sm flex-1 max-w-sm w-full mx-auto">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Essencial</h3>
-                    <p class="text-gray-500 mb-6 h-12">Para pequenos comércios que estão começando a se organizar.</p>
+                <div class="glass-panel p-8 flex-1">
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Essencial</h3>
+                    <p class="text-gray-500 text-sm mb-6 h-10">Para comércios que precisam organizar o caixa.</p>
                     <div class="mb-6">
-                        <span class="text-4xl font-extrabold text-gray-900">R$ 67</span>
-                        <span class="text-gray-500 font-medium">/mês</span>
+                        <span class="text-3xl font-bold text-slate-900">R$ 67</span>
+                        <span class="text-gray-500 text-sm">/mês</span>
                     </div>
-                    <ul class="space-y-4 mb-8">
-                        <li class="flex items-center gap-3 text-gray-600">
-                            <i class="ph-fill ph-check-circle text-indigo-600 text-xl"></i> PDV Rápido
+                    <ul class="space-y-3 mb-8 text-sm">
+                        <li class="flex items-center gap-2 text-gray-700">
+                            <i class="ph ph-check text-emerald-600"></i> PDV Rápido
                         </li>
-                        <li class="flex items-center gap-3 text-gray-600">
-                            <i class="ph-fill ph-check-circle text-indigo-600 text-xl"></i> Controle de Estoque
+                        <li class="flex items-center gap-2 text-gray-700">
+                            <i class="ph ph-check text-emerald-600"></i> Controle de Estoque
                         </li>
-                        <li class="flex items-center gap-3 text-gray-600">
-                            <i class="ph-fill ph-check-circle text-indigo-600 text-xl"></i> 1 Usuário (Caixa)
+                        <li class="flex items-center gap-2 text-gray-700">
+                            <i class="ph ph-check text-emerald-600"></i> 1 Usuário
                         </li>
-                        <li class="flex items-center gap-3 text-gray-400">
-                            <i class="ph ph-x-circle text-gray-300 text-xl"></i> <span class="line-through">Módulo de Fiado</span>
+                        <li class="flex items-center gap-2 text-gray-400 line-through">
+                            <i class="ph ph-x text-gray-300"></i> Módulo de Fiado
                         </li>
                     </ul>
-                    <a href="/registro" class="block w-full text-center bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-3 rounded-xl transition-colors">
+                    <a href="/registro" class="block w-full text-center bg-white border border-gray-300 hover:bg-gray-50 text-slate-900 font-medium py-2 rounded-md transition-colors">
                         Começar Essencial
                     </a>
                 </div>
 
-                <!-- Plano Profissional (Destaque) -->
-                <div class="bg-indigo-900 rounded-3xl p-8 border border-indigo-700 shadow-2xl flex-1 max-w-sm w-full mx-auto relative transform md:-translate-y-4">
-                    <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                        <span class="bg-gradient-to-r from-emerald-400 to-emerald-500 text-white text-xs font-bold uppercase tracking-wider py-1 px-4 rounded-full shadow-sm">
-                            Mais Escolhido
-                        </span>
+                <!-- Plano Profissional -->
+                <div class="glass-panel p-8 flex-1 border-slate-900 relative">
+                    <div class="absolute top-0 right-0 bg-slate-900 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-md">
+                        Recomendado
                     </div>
-                    <h3 class="text-2xl font-bold text-white mb-2">Profissional</h3>
-                    <p class="text-indigo-200 mb-6 h-12">Para lojas que precisam de controle total e sem limitações.</p>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Profissional</h3>
+                    <p class="text-gray-500 text-sm mb-6 h-10">Para operação completa com gestão de crediário.</p>
                     <div class="mb-6">
-                        <span class="text-4xl font-extrabold text-white">R$ 127</span>
-                        <span class="text-indigo-300 font-medium">/mês</span>
+                        <span class="text-3xl font-bold text-slate-900">R$ 127</span>
+                        <span class="text-gray-500 text-sm">/mês</span>
                     </div>
-                    <ul class="space-y-4 mb-8">
-                        <li class="flex items-center gap-3 text-indigo-100">
-                            <i class="ph-fill ph-check-circle text-emerald-400 text-xl"></i> Tudo do plano Essencial
+                    <ul class="space-y-3 mb-8 text-sm">
+                        <li class="flex items-center gap-2 text-gray-700">
+                            <i class="ph ph-check text-emerald-600"></i> Tudo do plano Essencial
                         </li>
-                        <li class="flex items-center gap-3 text-white font-medium">
-                            <i class="ph-fill ph-check-circle text-emerald-400 text-xl"></i> Módulo Completo de Fiado
+                        <li class="flex items-center gap-2 text-gray-700 font-medium">
+                            <i class="ph ph-check text-emerald-600"></i> Módulo Completo de Fiado
                         </li>
-                        <li class="flex items-center gap-3 text-white font-medium">
-                            <i class="ph-fill ph-check-circle text-emerald-400 text-xl"></i> Usuários Ilimitados
+                        <li class="flex items-center gap-2 text-gray-700">
+                            <i class="ph ph-check text-emerald-600"></i> Usuários Ilimitados
                         </li>
-                        <li class="flex items-center gap-3 text-indigo-100">
-                            <i class="ph-fill ph-check-circle text-emerald-400 text-xl"></i> Suporte Prioritário (WhatsApp)
+                        <li class="flex items-center gap-2 text-gray-700">
+                            <i class="ph ph-check text-emerald-600"></i> Suporte Prioritário
                         </li>
                     </ul>
-                    <a href="/registro" class="block w-full text-center bg-indigo-500 hover:bg-indigo-400 text-white font-bold py-3 rounded-xl transition-colors shadow-lg shadow-indigo-600/30">
+                    <a href="/registro" class="block w-full text-center bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 rounded-md transition-colors">
                         Começar Profissional
                     </a>
                 </div>
@@ -275,28 +259,15 @@
     </section>
 
     <!-- Footer -->
-    <footer id="contato" class="bg-white border-t border-gray-100 pt-16 pb-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col md:flex-row justify-between items-center md:items-start gap-8 mb-12">
-                <div class="flex items-center gap-2">
-                    <i class="ph-fill ph-package text-indigo-600 text-3xl"></i>
-                    <span class="font-bold text-xl text-gray-900">StockFlow SaaS</span>
-                </div>
-                <div class="flex gap-8">
-                    <a href="#" class="text-gray-500 hover:text-indigo-600"><i class="ph-fill ph-instagram-logo text-2xl"></i></a>
-                    <a href="#" class="text-gray-500 hover:text-indigo-600"><i class="ph-fill ph-facebook-logo text-2xl"></i></a>
-                    <a href="#" class="text-gray-500 hover:text-indigo-600"><i class="ph-fill ph-whatsapp-logo text-2xl"></i></a>
-                </div>
+    <footer id="contato" class="bg-white border-t border-gray-200 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <i class="ph-fill ph-package text-slate-900 text-xl"></i>
+                <span class="font-bold text-slate-900">StockFlow</span>
             </div>
-            <div class="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                <p class="text-sm text-gray-500">
-                    &copy; <?= date('Y') ?> StockFlow SaaS. Todos os direitos reservados.
-                </p>
-                <div class="flex gap-6 text-sm text-gray-500">
-                    <a href="#" class="hover:text-indigo-600">Termos de Uso</a>
-                    <a href="#" class="hover:text-indigo-600">Política de Privacidade</a>
-                </div>
-            </div>
+            <p class="text-xs text-gray-500">
+                &copy; <?= date('Y') ?> StockFlow SaaS. Todos os direitos reservados.
+            </p>
         </div>
     </footer>
 
