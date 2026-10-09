@@ -12,14 +12,15 @@ class CaixaController {
         
         // Verifica se há caixa aberto para o usuário atual
         $idUsuario = $_SESSION['usuario_id'];
-        $stmt = $db->prepare("SELECT * FROM caixas WHERE id_usuario = ? AND status = 'Aberto' ORDER BY id_caixa DESC LIMIT 1");
-        $stmt->execute([$idUsuario]);
+        $idEmpresa = $_SESSION['empresa_id'];
+        $stmt = $db->prepare("SELECT * FROM caixas WHERE id_usuario = ? AND id_empresa = ? AND status = 'Aberto' ORDER BY id_caixa DESC LIMIT 1");
+        $stmt->execute([$idUsuario, $idEmpresa]);
         $caixaAberto = $stmt->fetch(PDO::FETCH_ASSOC);
         
         $movimentacoes = [];
         if ($caixaAberto) {
-            $stmtMov = $db->prepare("SELECT * FROM caixa_movimentacoes WHERE id_caixa = ? ORDER BY id_movimentacao DESC");
-            $stmtMov->execute([$caixaAberto['id_caixa']]);
+            $stmtMov = $db->prepare("SELECT * FROM caixa_movimentacoes WHERE id_caixa = ? AND id_empresa = ? ORDER BY id_movimentacao DESC");
+            $stmtMov->execute([$caixaAberto['id_caixa'], $idEmpresa]);
             $movimentacoes = $stmtMov->fetchAll(PDO::FETCH_ASSOC);
             
             // Recalcula o saldo final no momento atual
@@ -42,8 +43,9 @@ class CaixaController {
         $db = Database::getConnection();
         
         // Verifica novamente para não abrir 2 caixas
-        $stmt = $db->prepare("SELECT id_caixa FROM caixas WHERE id_usuario = ? AND status = 'Aberto'");
-        $stmt->execute([$idUsuario]);
+        $idEmpresa = $_SESSION['empresa_id'];
+        $stmt = $db->prepare("SELECT id_caixa FROM caixas WHERE id_usuario = ? AND id_empresa = ? AND status = 'Aberto'");
+        $stmt->execute([$idUsuario, $idEmpresa]);
         
         header('Content-Type: application/json');
         
@@ -54,12 +56,12 @@ class CaixaController {
         
         try {
             $db->beginTransaction();
-            $stmtInsert = $db->prepare("INSERT INTO caixas (id_usuario, saldo_inicial, status) VALUES (?, ?, 'Aberto')");
-            $stmtInsert->execute([$idUsuario, $saldoInicial]);
+            $stmtInsert = $db->prepare("INSERT INTO caixas (id_empresa, id_usuario, saldo_inicial, status) VALUES (?, ?, ?, 'Aberto')");
+            $stmtInsert->execute([$idEmpresa, $idUsuario, $saldoInicial]);
             $idCaixa = $db->lastInsertId();
             
-            $stmtMov = $db->prepare("INSERT INTO caixa_movimentacoes (id_caixa, tipo, valor, descricao) VALUES (?, 'Abertura', ?, 'Fundo de Troco Inicial')");
-            $stmtMov->execute([$idCaixa, $saldoInicial]);
+            $stmtMov = $db->prepare("INSERT INTO caixa_movimentacoes (id_empresa, id_caixa, tipo, valor, descricao) VALUES (?, ?, 'Abertura', ?, 'Fundo de Troco Inicial')");
+            $stmtMov->execute([$idEmpresa, $idCaixa, $saldoInicial]);
             
             $db->commit();
             echo json_encode(['success' => true]);
@@ -76,8 +78,9 @@ class CaixaController {
         $db = Database::getConnection();
         
         // Calcula saldo atual
-        $stmtMov = $db->prepare("SELECT tipo, valor FROM caixa_movimentacoes WHERE id_caixa = ?");
-        $stmtMov->execute([$idCaixa]);
+        $idEmpresa = $_SESSION['empresa_id'];
+        $stmtMov = $db->prepare("SELECT tipo, valor FROM caixa_movimentacoes WHERE id_caixa = ? AND id_empresa = ?");
+        $stmtMov->execute([$idCaixa, $idEmpresa]);
         $movs = $stmtMov->fetchAll(PDO::FETCH_ASSOC);
         
         $saldoFinal = 0;
@@ -88,8 +91,8 @@ class CaixaController {
         
         header('Content-Type: application/json');
         
-        $stmt = $db->prepare("UPDATE caixas SET status = 'Fechado', data_fechamento = CURRENT_TIMESTAMP, saldo_final = ? WHERE id_caixa = ?");
-        if ($stmt->execute([$saldoFinal, $idCaixa])) {
+        $stmt = $db->prepare("UPDATE caixas SET status = 'Fechado', data_fechamento = CURRENT_TIMESTAMP, saldo_final = ? WHERE id_caixa = ? AND id_empresa = ?");
+        if ($stmt->execute([$saldoFinal, $idCaixa, $idEmpresa])) {
             echo json_encode(['success' => true, 'id_caixa' => $idCaixa]);
         } else {
             http_response_code(500);
@@ -105,16 +108,17 @@ class CaixaController {
         
         $db = Database::getConnection();
         
-        $stmt = $db->prepare("SELECT c.*, u.nome FROM caixas c JOIN usuarios u ON c.id_usuario = u.id_usuario WHERE c.id_caixa = ?");
-        $stmt->execute([$id]);
+        $idEmpresa = $_SESSION['empresa_id'];
+        $stmt = $db->prepare("SELECT c.*, u.nome FROM caixas c JOIN usuarios u ON c.id_usuario = u.id_usuario WHERE c.id_caixa = ? AND c.id_empresa = ?");
+        $stmt->execute([$id, $idEmpresa]);
         $caixa = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if (!$caixa) {
             die("Caixa não encontrado.");
         }
         
-        $stmtMov = $db->prepare("SELECT * FROM caixa_movimentacoes WHERE id_caixa = ? ORDER BY id_movimentacao ASC");
-        $stmtMov->execute([$id]);
+        $stmtMov = $db->prepare("SELECT * FROM caixa_movimentacoes WHERE id_caixa = ? AND id_empresa = ? ORDER BY id_movimentacao ASC");
+        $stmtMov->execute([$id, $idEmpresa]);
         $movs = $stmtMov->fetchAll(PDO::FETCH_ASSOC);
         
         require __DIR__ . '/../Views/caixa/relatorio.php';
@@ -137,8 +141,9 @@ class CaixaController {
         
         $db = \App\Core\Database::getConnection();
         
-        $stmtMov = $db->prepare("INSERT INTO caixa_movimentacoes (id_caixa, tipo, valor, descricao) VALUES (?, ?, ?, ?)");
-        if ($stmtMov->execute([$idCaixa, $tipo, $valor, $descricao])) {
+        $idEmpresa = $_SESSION['empresa_id'];
+        $stmtMov = $db->prepare("INSERT INTO caixa_movimentacoes (id_empresa, id_caixa, tipo, valor, descricao) VALUES (?, ?, ?, ?, ?)");
+        if ($stmtMov->execute([$idEmpresa, $idCaixa, $tipo, $valor, $descricao])) {
             echo json_encode(['success' => true]);
         } else {
             http_response_code(500);

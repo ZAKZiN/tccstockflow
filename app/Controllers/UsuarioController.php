@@ -9,7 +9,9 @@ class UsuarioController {
     
     public function index() {
         $db = Database::getConnection();
-        $stmt = $db->query("SELECT id_usuario, nome, login, nivel_acesso, criado_em FROM usuarios ORDER BY nome ASC");
+        $idEmpresa = $_SESSION['empresa_id'];
+        $stmt = $db->prepare("SELECT id_usuario, nome, login, nivel_acesso, criado_em FROM usuarios WHERE id_empresa = ? ORDER BY nome ASC");
+        $stmt->execute([$idEmpresa]);
         $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         $error = $_GET['error'] ?? null;
@@ -40,16 +42,17 @@ class UsuarioController {
         $db = Database::getConnection();
         
         // Verifica se login já existe
-        $stmtCheck = $db->prepare("SELECT id_usuario FROM usuarios WHERE login = ?");
-        $stmtCheck->execute([$login]);
+        $idEmpresa = $_SESSION['empresa_id'];
+        $stmtCheck = $db->prepare("SELECT id_usuario FROM usuarios WHERE login = ? AND id_empresa = ?");
+        $stmtCheck->execute([$login, $idEmpresa]);
         if ($stmtCheck->fetch()) {
             header('Location: /usuarios?error=Nome de usuário (login) já está em uso.');
             exit;
         }
         
         try {
-            $stmt = $db->prepare("INSERT INTO usuarios (nome, login, senha, nivel_acesso) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$nome, $login, $senhaHash, $nivel]);
+            $stmt = $db->prepare("INSERT INTO usuarios (id_empresa, nome, login, senha, nivel_acesso) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$idEmpresa, $nome, $login, $senhaHash, $nivel]);
             header('Location: /usuarios?success=Usuário cadastrado com sucesso!');
         } catch (\PDOException $e) {
             header('Location: /usuarios?error=' . urlencode('Erro no banco: ' . $e->getMessage()));
@@ -68,8 +71,9 @@ class UsuarioController {
         }
         
         $db = Database::getConnection();
-        $stmt = $db->prepare("DELETE FROM usuarios WHERE id_usuario = ?");
-        $stmt->execute([$id]);
+        $idEmpresa = $_SESSION['empresa_id'];
+        $stmt = $db->prepare("DELETE FROM usuarios WHERE id_usuario = ? AND id_empresa = ?");
+        $stmt->execute([$id, $idEmpresa]);
         
         header('Location: /usuarios?success=Usuário excluído com sucesso!');
         exit;

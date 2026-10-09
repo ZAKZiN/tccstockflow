@@ -23,14 +23,15 @@ class CompraController extends Controller {
             
             if ($id_requisicao && $id_fornecedor) {
                 try {
+                    $idEmpresa = $_SESSION['empresa_id'];
                     $db->beginTransaction();
                     // Insert Compra
-                    $stmt = $db->prepare("INSERT INTO compras (id_requisicao, id_fornecedor, valor_total) VALUES (?, ?, ?)");
-                    $stmt->execute([$id_requisicao, $id_fornecedor, $valor_total]);
+                    $stmt = $db->prepare("INSERT INTO compras (id_empresa, id_requisicao, id_fornecedor, valor_total) VALUES (?, ?, ?, ?)");
+                    $stmt->execute([$idEmpresa, $id_requisicao, $id_fornecedor, $valor_total]);
                     
                     // Update Requisicao Status to 'Compra Efetuada'
-                    $stmtReq = $db->prepare("UPDATE requisicoes SET status = 'Compra Efetuada' WHERE id_requisicao = ?");
-                    $stmtReq->execute([$id_requisicao]);
+                    $stmtReq = $db->prepare("UPDATE requisicoes SET status = 'Compra Efetuada' WHERE id_requisicao = ? AND id_empresa = ?");
+                    $stmtReq->execute([$id_requisicao, $idEmpresa]);
                     $db->commit();
                 } catch (\Exception $e) {
                     $db->rollBack();
@@ -44,20 +45,25 @@ class CompraController extends Controller {
         }
         
         // Fetch Compras
-        $stmt = $db->query("
+        $idEmpresa = $_SESSION['empresa_id'];
+        $stmt = $db->prepare("
             SELECT c.id_compra, c.valor_total, c.data_compra, r.material, r.quantidade, f.nome_fantasia 
             FROM compras c 
             JOIN requisicoes r ON c.id_requisicao = r.id_requisicao 
             LEFT JOIN fornecedores f ON c.id_fornecedor = f.id_fornecedor
+            WHERE c.id_empresa = ?
             ORDER BY c.data_compra DESC
         ");
+        $stmt->execute([$idEmpresa]);
         $compras = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         // For the Modal
-        $stmtReq = $db->query("SELECT id_requisicao, material, status FROM requisicoes WHERE status NOT IN ('Compra Efetuada', 'Recusado', 'Entregue')");
+        $stmtReq = $db->prepare("SELECT id_requisicao, material, status FROM requisicoes WHERE status NOT IN ('Compra Efetuada', 'Recusado', 'Entregue') AND id_empresa = ?");
+        $stmtReq->execute([$idEmpresa]);
         $requisicoes = $stmtReq->fetchAll(PDO::FETCH_ASSOC);
         
-        $stmtForn = $db->query("SELECT id_fornecedor, nome_fantasia FROM fornecedores");
+        $stmtForn = $db->prepare("SELECT id_fornecedor, nome_fantasia FROM fornecedores WHERE id_empresa = ?");
+        $stmtForn->execute([$idEmpresa]);
         $fornecedores = $stmtForn->fetchAll(PDO::FETCH_ASSOC);
         
         $this->view('compras/index', [

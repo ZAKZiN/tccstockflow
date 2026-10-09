@@ -37,8 +37,9 @@ class EstoqueController extends Controller {
         
         $db = \App\Core\Database::getConnection();
         
-        $stmtProd = $db->prepare("SELECT * FROM produtos WHERE id_produto = ?");
-        $stmtProd->execute([$id]);
+        $idEmpresa = $_SESSION['empresa_id'];
+        $stmtProd = $db->prepare("SELECT * FROM produtos WHERE id_produto = ? AND id_empresa = ?");
+        $stmtProd->execute([$id, $idEmpresa]);
         $produto = $stmtProd->fetch(\PDO::FETCH_ASSOC);
         
         if (!$produto) {
@@ -49,11 +50,11 @@ class EstoqueController extends Controller {
             SELECT m.*, u.nome as usuario_nome 
             FROM movimentacoes_estoque m
             LEFT JOIN usuarios u ON m.id_usuario = u.id_usuario
-            WHERE m.id_produto = ?
+            WHERE m.id_produto = ? AND m.id_empresa = ?
             ORDER BY m.data_movimentacao DESC
         ";
         $stmtMov = $db->prepare($sql);
-        $stmtMov->execute([$id]);
+        $stmtMov->execute([$id, $idEmpresa]);
         $movimentacoes = $stmtMov->fetchAll(\PDO::FETCH_ASSOC);
         
         $this->view('estoque/historico', [
@@ -89,22 +90,24 @@ class EstoqueController extends Controller {
                 if ($tipo === 'Transferência' || $tipo === 'Saída') { 
                     $sinal = '-';
                     // Check if stock is sufficient
-                    $stmtCheck = $db->prepare("SELECT quantidade_estoque FROM produtos WHERE id_produto = ?");
-                    $stmtCheck->execute([$idProduto]);
+                    $idEmpresa = $_SESSION['empresa_id'];
+                    $stmtCheck = $db->prepare("SELECT quantidade_estoque FROM produtos WHERE id_produto = ? AND id_empresa = ?");
+                    $stmtCheck->execute([$idProduto, $idEmpresa]);
                     $qtdAtual = $stmtCheck->fetchColumn();
                     if ($qtdAtual < $quantidade) {
                         throw new \Exception("Estoque insuficiente para a operação. (Atual: {$qtdAtual})");
                     }
                 }
                 
-                $sqlEstoque = "UPDATE produtos SET quantidade_estoque = quantidade_estoque $sinal ? WHERE id_produto = ?";
+                $idEmpresa = $_SESSION['empresa_id'];
+                $sqlEstoque = "UPDATE produtos SET quantidade_estoque = quantidade_estoque $sinal ? WHERE id_produto = ? AND id_empresa = ?";
                 $stmtEstq = $db->prepare($sqlEstoque);
-                $stmtEstq->execute([$quantidade, $idProduto]);
+                $stmtEstq->execute([$quantidade, $idProduto, $idEmpresa]);
                 
                 // Registrar Kardex
-                $sqlMov = "INSERT INTO movimentacoes_estoque (id_produto, id_usuario, tipo, quantidade, observacao) VALUES (?, ?, ?, ?, ?)";
+                $sqlMov = "INSERT INTO movimentacoes_estoque (id_empresa, id_produto, id_usuario, tipo, quantidade, observacao) VALUES (?, ?, ?, ?, ?, ?)";
                 $stmtMov = $db->prepare($sqlMov);
-                $stmtMov->execute([$idProduto, $idUsuario, $tipo, $quantidade, $observacao]);
+                $stmtMov->execute([$idEmpresa, $idProduto, $idUsuario, $tipo, $quantidade, $observacao]);
                 
                 $db->commit();
             } catch (\Exception $e) {
@@ -143,8 +146,9 @@ class EstoqueController extends Controller {
                 $idProduto = Produto::create($dados);
                 if ($idProduto && $qtdInicial > 0) {
                     $db = \App\Core\Database::getConnection();
-                    $stmtMov = $db->prepare("INSERT INTO movimentacoes_estoque (id_produto, id_usuario, tipo, quantidade, observacao) VALUES (?, ?, 'Entrada', ?, 'Saldo Inicial (Cadastro)')");
-                    $stmtMov->execute([$idProduto, $_SESSION['usuario_id'], $qtdInicial]);
+                    $idEmpresa = $_SESSION['empresa_id'];
+                    $stmtMov = $db->prepare("INSERT INTO movimentacoes_estoque (id_empresa, id_produto, id_usuario, tipo, quantidade, observacao) VALUES (?, ?, ?, 'Entrada', ?, 'Saldo Inicial (Cadastro)')");
+                    $stmtMov->execute([$idEmpresa, $idProduto, $_SESSION['usuario_id'], $qtdInicial]);
                 }
                 $this->redirect('/estoque');
             } catch (\Exception $e) {
@@ -174,12 +178,14 @@ class EstoqueController extends Controller {
             FROM produtos p
             JOIN vendas_itens vi ON p.id_produto = vi.id_produto
             JOIN vendas v ON vi.id_venda = v.id_venda
-            WHERE v.status = 'Concluída'
+            WHERE v.status = 'Concluída' AND p.id_empresa = ?
             GROUP BY p.id_produto
             ORDER BY receita_total DESC
         ";
         
-        $stmt = $db->query($sql);
+        $idEmpresa = $_SESSION['empresa_id'];
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$idEmpresa]);
         $produtos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         
         // Calcula o total geral de receita

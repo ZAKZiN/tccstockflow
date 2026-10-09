@@ -22,15 +22,18 @@ class FornecedorController extends Controller {
             $telefone = $_POST['telefone'] ?? '';
             
             try {
-                $stmt = $db->prepare("INSERT INTO fornecedores (nome_fantasia, cnpj, email, telefone) VALUES (?, ?, ?, ?)");
-                $stmt->execute([$nome, $cnpj, $email, $telefone]);
+                $idEmpresa = $_SESSION['empresa_id'];
+                $stmt = $db->prepare("INSERT INTO fornecedores (id_empresa, nome_fantasia, cnpj, email, telefone) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$idEmpresa, $nome, $cnpj, $email, $telefone]);
                 $this->redirect('/fornecedores?success=Fornecedor cadastrado!');
             } catch (\Exception $e) {
                 $this->redirect('/fornecedores?error=' . urlencode('Erro ao cadastrar fornecedor: ' . $e->getMessage()));
             }
         }
         
-        $stmt = $db->query("SELECT * FROM fornecedores ORDER BY nome_fantasia ASC");
+        $idEmpresa = $_SESSION['empresa_id'];
+        $stmt = $db->prepare("SELECT * FROM fornecedores WHERE id_empresa = ? ORDER BY nome_fantasia ASC");
+        $stmt->execute([$idEmpresa]);
         $fornecedores = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         $this->view('fornecedores/index', ['fornecedores' => $fornecedores]);

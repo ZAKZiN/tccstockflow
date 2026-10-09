@@ -15,7 +15,9 @@ class AuditoriaController extends Controller {
         
         $db = Database::getConnection();
         
-        $stmt = $db->query("SELECT * FROM audit_logs ORDER BY criado_em DESC LIMIT 100");
+        $idEmpresa = $_SESSION['empresa_id'];
+        $stmt = $db->prepare("SELECT * FROM audit_logs WHERE id_empresa = ? ORDER BY criado_em DESC LIMIT 100");
+        $stmt->execute([$idEmpresa]);
         $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $this->view('auditoria/index', [

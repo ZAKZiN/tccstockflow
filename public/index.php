@@ -60,11 +60,18 @@ $router = new Router();
 
 // --- Rotas da Aplicação ---
 use App\Controllers\AuthController;
+use App\Controllers\LandingController;
+
+// Rota Pública (Landing Page)
+$router->get('/', LandingController::class . '@index');
 
 // Rotas de Autenticação
-$router->get('/', AuthController::class . '@index');
+$router->get('/login', AuthController::class . '@index');
 $router->post('/login', AuthController::class . '@login');
 $router->get('/logout', AuthController::class . '@logout');
+$router->get('/registro', AuthController::class . '@register');
+$router->post('/registro', AuthController::class . '@storeRegister');
+$router->get('/assinatura-pendente', AuthController::class . '@bloqueado');
 // $router->get('/login/google', AuthController::class . '@googleLogin');
 // $router->get('/login/google/callback', AuthController::class . '@googleCallback');
 
@@ -81,12 +88,34 @@ function checkAccess($allowedRoles) {
     }
 }
 
+// Cibersegurança e SaaS: Middleware de Validação de Assinatura
+$router->before('GET|POST', '/.*', function() {
+    $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    
+    // Ignorar rotas públicas e a própria tela de bloqueio
+    if ($uri === '/' || strpos($uri, '/login') === 0 || strpos($uri, '/logout') === 0 || strpos($uri, '/registro') === 0 || strpos($uri, '/assinatura-pendente') === 0) {
+        return;
+    }
+    
+    if (isset($_SESSION['empresa_id'])) {
+        $db = \App\Core\Database::getConnection();
+        $stmt = $db->prepare("SELECT status_assinatura FROM empresas WHERE id_empresa = ?");
+        $stmt->execute([$_SESSION['empresa_id']]);
+        $empresa = $stmt->fetch(\PDO::FETCH_ASSOC);
+        
+        if ($empresa && $empresa['status_assinatura'] !== 'ativo') {
+            header('Location: /assinatura-pendente');
+            exit;
+        }
+    }
+});
+
 // Cibersegurança: Middleware de Validação de CSRF Token (Todas as requisições POST, exceto APIs específicas se houver)
 $router->before('POST', '/.*', function() {
     // Ignorar webhook/api do pdv e login temporariamente ou forçar nelas tbm
     $uri = $_SERVER['REQUEST_URI'];
-    if (strpos($uri, '/pdv/finalizar') !== false || strpos($uri, '/api/notificacoes/ler') !== false || strpos($uri, '/compras') !== false || strpos($uri, '/fornecedores') !== false) {
-        // Ignora webhook/api do pdv, leitura de notificação e rotas sensíveis a timeout no XAMPP
+    if (strpos($uri, '/pdv/finalizar') !== false || strpos($uri, '/api/notificacoes/ler') !== false || strpos($uri, '/compras') !== false || strpos($uri, '/fornecedores') !== false || strpos($uri, '/registro') !== false) {
+        // Ignora webhook/api do pdv, leitura de notificação e rotas sensíveis a timeout no XAMPP e registro
         return; 
     }
     

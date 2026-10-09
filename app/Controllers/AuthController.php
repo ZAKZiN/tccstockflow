@@ -35,21 +35,19 @@ class AuthController extends Controller {
                 exit;
             }
 
+            $codigo_acesso = $_POST['codigo_acesso'] ?? '';
             $login = $_POST['login'] ?? '';
             $senha = $_POST['senha'] ?? '';
             
-            $db = \App\Core\Database::getConnection();
+            $user = Usuario::authenticate($codigo_acesso, $login, $senha);
             
-            $stmt = $db->prepare("SELECT * FROM usuarios WHERE login = ?");
-            $stmt->execute([$login]);
-            $user = $stmt->fetch(\PDO::FETCH_ASSOC);
-            
-            if ($user && password_verify($senha, $user['senha'])) {
+            if ($user) {
                 // Reset attempts on success
                 unset($_SESSION['login_attempts']);
                 unset($_SESSION['lockout_time']);
 
                 $_SESSION['usuario_id'] = $user['id_usuario'];
+                $_SESSION['empresa_id'] = $user['id_empresa'];
                 $_SESSION['usuario_nome'] = $user['nome'];
                 $_SESSION['usuario_nivel'] = $user['nivel_acesso'];
                 
@@ -80,6 +78,69 @@ class AuthController extends Controller {
         session_unset();
         session_destroy();
         $this->redirect('/');
+    }
+
+    public function register() {
+        if (isset($_SESSION['usuario_id'])) {
+            $this->redirect('/dashboard');
+        }
+        $data = [];
+        if (isset($_GET['error'])) {
+            $data['error'] = $_GET['error'];
+        }
+        $this->view('auth/register', $data);
+    }
+    
+    public function bloqueado() {
+        if (!isset($_SESSION['usuario_id'])) {
+            $this->redirect('/');
+        }
+        $this->view('auth/bloqueado');
+    }
+
+    public function storeRegister() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $razao_social = $_POST['razao_social'] ?? '';
+            $nome = $_POST['nome'] ?? '';
+            $login = $_POST['login'] ?? '';
+            $senha = $_POST['senha'] ?? '';
+
+            if (empty($razao_social) || empty($nome) || empty($login) || empty($senha)) {
+                header('Location: /registro?error=' . urlencode('Preencha todos os campos'));
+                exit;
+            }
+
+            $db = \App\Core\Database::getConnection();
+            try {
+                $db->beginTransaction();
+
+                $codigo_acesso = strtoupper(substr(md5(uniqid()), 0, 6)); // E.g. A3F8E2
+
+                // 1. Cria a empresa
+                $stmt = $db->prepare("INSERT INTO empresas (razao_social, codigo_acesso) VALUES (?, ?) RETURNING id_empresa");
+                $stmt->execute([$razao_social, $codigo_acesso]);
+                $empresa = $stmt->fetch(\PDO::FETCH_ASSOC);
+                
+                if (!$empresa) {
+                    throw new \Exception("Falha ao criar empresa");
+                }
+                
+                $id_empresa = $empresa['id_empresa'];
+
+                // 2. Cria o usuário administrador vinculado
+                $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
+                $stmtUser = $db->prepare("INSERT INTO usuarios (id_empresa, nome, login, senha, nivel_acesso) VALUES (?, ?, ?, ?, 'Administrador')");
+                $stmtUser->execute([$id_empresa, $nome, $login, $senhaHash]);
+
+                $db->commit();
+                header('Location: /?msg=' . urlencode("Conta criada com sucesso! O Código da sua Empresa é: {$codigo_acesso}. Guarde-o para o Login!"));
+                exit;
+            } catch (\Exception $e) {
+                $db->rollBack();
+                header('Location: /registro?error=' . urlencode('Erro ao criar conta: ' . $e->getMessage()));
+                exit;
+            }
+        }
     }
 
     /*
@@ -172,6 +233,7 @@ class AuthController extends Controller {
 
             // Realiza o login
             $_SESSION['usuario_id'] = $user['id_usuario'];
+            $_SESSION['empresa_id'] = $user['id_empresa'];
             $_SESSION['usuario_nome'] = $user['nome'];
             $_SESSION['usuario_nivel'] = $user['nivel_acesso'];
 

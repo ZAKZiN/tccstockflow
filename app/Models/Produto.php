@@ -9,23 +9,29 @@ class Produto {
     
     public static function getAll() {
         $db = Database::getConnection();
-        $stmt = $db->query("SELECT * FROM produtos ORDER BY nome_produto ASC");
+        $idEmpresa = $_SESSION['empresa_id'];
+        $stmt = $db->prepare("SELECT * FROM produtos WHERE id_empresa = ? ORDER BY nome_produto ASC");
+        $stmt->execute([$idEmpresa]);
         return $stmt->fetchAll();
     }
     
     public static function getCriticos() {
         $db = Database::getConnection();
-        $stmt = $db->query("SELECT * FROM produtos WHERE quantidade_estoque <= estoque_minimo ORDER BY quantidade_estoque ASC");
+        $idEmpresa = $_SESSION['empresa_id'];
+        $stmt = $db->prepare("SELECT * FROM produtos WHERE id_empresa = ? AND quantidade_estoque <= COALESCE(estoque_minimo, 0) ORDER BY quantidade_estoque ASC");
+        $stmt->execute([$idEmpresa]);
         return $stmt->fetchAll();
     }
 
     public static function create($dados) {
         $db = Database::getConnection();
-        $sql = "INSERT INTO produtos (nome_produto, codigo_barras, sku, id_categoria, preco_custo, preco_venda, quantidade_estoque, estoque_minimo, lote, data_validade) 
-                VALUES (:nome_produto, :codigo_barras, :sku, :id_categoria, :preco_custo, :preco_venda, :quantidade_estoque, :estoque_minimo, :lote, :data_validade)";
+        $idEmpresa = $_SESSION['empresa_id'];
+        $sql = "INSERT INTO produtos (id_empresa, nome_produto, codigo_barras, sku, id_categoria, preco_custo, preco_venda, quantidade_estoque, estoque_minimo, lote, data_validade) 
+                VALUES (:id_empresa, :nome_produto, :codigo_barras, :sku, :id_categoria, :preco_custo, :preco_venda, :quantidade_estoque, :estoque_minimo, :lote, :data_validade)";
         
         $stmt = $db->prepare($sql);
         if ($stmt->execute([
+            ':id_empresa' => $idEmpresa,
             ':nome_produto' => $dados['nome_produto'],
             ':codigo_barras' => $dados['codigo_barras'],
             ':sku' => $dados['sku'],

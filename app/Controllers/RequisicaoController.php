@@ -117,8 +117,9 @@ class RequisicaoController extends Controller {
         $db = \App\Core\Database::getConnection();
         
         // Buscar a requisição
-        $stmt = $db->prepare("SELECT * FROM requisicoes WHERE id_requisicao = ?");
-        $stmt->execute([$id]);
+        $idEmpresa = $_SESSION['empresa_id'];
+        $stmt = $db->prepare("SELECT * FROM requisicoes WHERE id_requisicao = ? AND id_empresa = ?");
+        $stmt->execute([$id, $idEmpresa]);
         $req = $stmt->fetch(\PDO::FETCH_ASSOC);
         
         if ($req) {
@@ -126,12 +127,12 @@ class RequisicaoController extends Controller {
                 $db->beginTransaction();
                 
                 // Mudar status para Despachado
-                $stmtUpdate = $db->prepare("UPDATE requisicoes SET status = 'Despachado' WHERE id_requisicao = ?");
-                $stmtUpdate->execute([$id]);
+                $stmtUpdate = $db->prepare("UPDATE requisicoes SET status = 'Despachado' WHERE id_requisicao = ? AND id_empresa = ?");
+                $stmtUpdate->execute([$id, $idEmpresa]);
                 
                 // Tentar encontrar o produto no estoque com o mesmo nome exato
-                $stmtProd = $db->prepare("SELECT id_produto, quantidade_estoque FROM produtos WHERE nome_produto = ? COLLATE NOCASE");
-                $stmtProd->execute([$req['material']]);
+                $stmtProd = $db->prepare("SELECT id_produto, quantidade_estoque FROM produtos WHERE LOWER(nome_produto) = LOWER(?) AND id_empresa = ?");
+                $stmtProd->execute([$req['material'], $idEmpresa]);
                 $produto = $stmtProd->fetch(\PDO::FETCH_ASSOC);
                 
                 if ($produto) {
@@ -141,13 +142,14 @@ class RequisicaoController extends Controller {
                     
                     // Dar baixa no estoque
                     $novaQtd = $produto['quantidade_estoque'] - $req['quantidade'];
-                    $stmtEstoque = $db->prepare("UPDATE produtos SET quantidade_estoque = ? WHERE id_produto = ?");
-                    $stmtEstoque->execute([$novaQtd, $produto['id_produto']]);
+                    $stmtEstoque = $db->prepare("UPDATE produtos SET quantidade_estoque = ? WHERE id_produto = ? AND id_empresa = ?");
+                    $stmtEstoque->execute([$novaQtd, $produto['id_produto'], $idEmpresa]);
                     
                     // Registrar no Kardex
-                    $sqlMov = "INSERT INTO movimentacoes_estoque (id_produto, id_usuario, tipo, quantidade, observacao) VALUES (?, ?, 'Saída', ?, ?)";
+                    $sqlMov = "INSERT INTO movimentacoes_estoque (id_empresa, id_produto, id_usuario, tipo, quantidade, observacao) VALUES (?, ?, ?, 'Saída', ?, ?)";
                     $stmtMov = $db->prepare($sqlMov);
                     $stmtMov->execute([
+                        $idEmpresa,
                         $produto['id_produto'], 
                         $_SESSION['usuario_id'], 
                         $req['quantidade'], 

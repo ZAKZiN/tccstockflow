@@ -11,27 +11,20 @@ class Database {
     public static function getConnection() {
         if (self::$instance === null) {
             try {
-                $dbPath = __DIR__ . '/../../database.sqlite';
-                $isNew = !file_exists($dbPath);
+                $host = $_ENV['DB_HOST'] ?? 'localhost';
+                $port = $_ENV['DB_PORT'] ?? '5432';
+                $db = $_ENV['DB_NAME'] ?? 'postgres';
+                $user = $_ENV['DB_USER'] ?? 'postgres';
+                $pass = $_ENV['DB_PASS'] ?? '';
+                $sslmode = $_ENV['DB_SSLMODE'] ?? 'prefer';
 
-                self::$instance = new PDO("sqlite:" . $dbPath);
+                $dsn = "pgsql:host=$host;port=$port;dbname=$db;sslmode=$sslmode";
                 
-                // Configurando o PDO para lançar exceções em caso de erro
+                self::$instance = new PDO($dsn, $user, $pass);
                 self::$instance->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                // Configurando o retorno padrão como array associativo
                 self::$instance->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-                
-                // Habilitar Foreign Keys no SQLite
-                self::$instance->exec('PRAGMA foreign_keys = ON;');
-
-                // Auto-Inicialização: Se o banco acabou de ser criado, roda o SQL
-                if ($isNew) {
-                    $sql = file_get_contents(__DIR__ . '/../../database.sql');
-                    self::$instance->exec($sql);
-                }
-                
             } catch(PDOException $exception) {
-                echo "Erro de conexão com o Banco de Dados SQLite: " . $exception->getMessage();
+                echo "Erro de conexão com o Banco de Dados PostgreSQL: " . $exception->getMessage();
                 exit;
             }
         }

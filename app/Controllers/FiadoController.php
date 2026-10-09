@@ -15,13 +15,16 @@ class FiadoController extends Controller {
         
         $db = Database::getConnection();
         
+        $idEmpresa = $_SESSION['empresa_id'];
         $sql = "
             SELECT cr.id_conta, c.nome as cliente, c.telefone, cr.valor_total, cr.status, cr.criado_em, cr.id_venda 
             FROM contas_receber cr
             JOIN clientes c ON cr.id_cliente = c.id_cliente
+            WHERE cr.id_empresa = ?
             ORDER BY cr.status DESC, cr.criado_em DESC
         ";
-        $stmt = $db->query($sql);
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$idEmpresa]);
         $contas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $this->view('fiado/index', [
@@ -37,8 +40,9 @@ class FiadoController extends Controller {
         $db = Database::getConnection();
         
         try {
-            $stmt = $db->prepare("UPDATE contas_receber SET status = 'Pago', valor_pago = valor_total WHERE id_conta = ?");
-            $stmt->execute([$id]);
+            $idEmpresa = $_SESSION['empresa_id'];
+            $stmt = $db->prepare("UPDATE contas_receber SET status = 'Pago', valor_pago = valor_total WHERE id_conta = ? AND id_empresa = ?");
+            $stmt->execute([$id, $idEmpresa]);
             $this->redirect('/fiado?success=Conta paga com sucesso!');
         } catch (\Exception $e) {
             $this->redirect('/fiado?error=' . urlencode('Erro ao processar pagamento.'));

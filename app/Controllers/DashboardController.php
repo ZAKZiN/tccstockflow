@@ -15,46 +15,54 @@ class DashboardController extends Controller {
         
         $db = Database::getConnection();
         
+        $idEmpresa = $_SESSION['empresa_id'];
+        
         // Faturamento Hoje
-        $stmtFaturamento = $db->query("
+        $stmtFaturamento = $db->prepare("
             SELECT SUM(valor_total) 
             FROM vendas 
-            WHERE date(data_venda) = date('now', 'localtime')
+            WHERE DATE(data_venda) = CURRENT_DATE AND id_empresa = ?
         ");
+        $stmtFaturamento->execute([$idEmpresa]);
         $faturamentoHoje = $stmtFaturamento->fetchColumn() ?: 0;
         
         // Lucro Hoje (Faturamento - Custo)
-        $stmtLucro = $db->query("
-            SELECT SUM((vi.preco_unitario - IFNULL(p.preco_custo, 0)) * vi.quantidade)
+        $stmtLucro = $db->prepare("
+            SELECT SUM((vi.preco_unitario - COALESCE(p.preco_custo, 0)) * vi.quantidade)
             FROM vendas_itens vi
             JOIN produtos p ON vi.id_produto = p.id_produto
             JOIN vendas v ON vi.id_venda = v.id_venda
-            WHERE date(v.data_venda) = date('now', 'localtime')
+            WHERE DATE(v.data_venda) = CURRENT_DATE AND v.id_empresa = ?
         ");
+        $stmtLucro->execute([$idEmpresa]);
         $lucroHoje = $stmtLucro->fetchColumn() ?: 0;
         
         // Vendas Hoje
-        $stmtVendas = $db->query("
+        $stmtVendas = $db->prepare("
             SELECT COUNT(*) 
             FROM vendas 
-            WHERE date(data_venda) = date('now', 'localtime')
+            WHERE DATE(data_venda) = CURRENT_DATE AND id_empresa = ?
         ");
+        $stmtVendas->execute([$idEmpresa]);
         $vendasHoje = $stmtVendas->fetchColumn() ?: 0;
         
         // Estoque Crítico
-        $stmtEstoque = $db->query("SELECT COUNT(*) FROM produtos WHERE quantidade_estoque <= IFNULL(estoque_minimo, 0)");
+        $stmtEstoque = $db->prepare("SELECT COUNT(*) FROM produtos WHERE quantidade_estoque <= COALESCE(estoque_minimo, 0) AND id_empresa = ?");
+        $stmtEstoque->execute([$idEmpresa]);
         $estoqueCritico = $stmtEstoque->fetchColumn() ?: 0;
 
-        $stmtEstoqueList = $db->query("SELECT nome_produto, quantidade_estoque, estoque_minimo FROM produtos WHERE quantidade_estoque <= IFNULL(estoque_minimo, 0)");
+        $stmtEstoqueList = $db->prepare("SELECT nome_produto, quantidade_estoque, estoque_minimo FROM produtos WHERE quantidade_estoque <= COALESCE(estoque_minimo, 0) AND id_empresa = ?");
+        $stmtEstoqueList->execute([$idEmpresa]);
         $estoqueCriticoList = $stmtEstoqueList->fetchAll(PDO::FETCH_ASSOC);
         
         // Chart 1: Faturamento por Mês (Current Year)
-        $stmtChart1 = $db->query("
-            SELECT cast(strftime('%m', data_venda) as integer) as mes, SUM(valor_total) as total 
+        $stmtChart1 = $db->prepare("
+            SELECT EXTRACT(MONTH FROM data_venda) as mes, SUM(valor_total) as total 
             FROM vendas 
-            WHERE strftime('%Y', data_venda) = strftime('%Y', 'now', 'localtime') 
+            WHERE EXTRACT(YEAR FROM data_venda) = EXTRACT(YEAR FROM CURRENT_DATE) AND id_empresa = ? 
             GROUP BY mes ORDER BY mes
         ");
+        $stmtChart1->execute([$idEmpresa]);
         
         $mesesData = array_fill(1, 12, 0);
         while($row = $stmtChart1->fetch(PDO::FETCH_ASSOC)) {
@@ -63,14 +71,16 @@ class DashboardController extends Controller {
         $chartMensal = array_values($mesesData);
         
         // Chart 2: Produtos mais vendidos
-        $stmtChart2 = $db->query("
+        $stmtChart2 = $db->prepare("
             SELECT p.nome_produto, SUM(vi.quantidade) as total 
             FROM vendas_itens vi
             JOIN produtos p ON vi.id_produto = p.id_produto
+            WHERE vi.id_empresa = ?
             GROUP BY p.nome_produto
             ORDER BY total DESC
             LIMIT 5
         ");
+        $stmtChart2->execute([$idEmpresa]);
         
         $produtosNomes = [];
         $produtosTotais = [];
@@ -80,24 +90,27 @@ class DashboardController extends Controller {
         }
         
         // Lista detalhada dos produtos mais vendidos
-        $stmtTopProdutos = $db->query("
+        $stmtTopProdutos = $db->prepare("
             SELECT p.id_produto, p.nome_produto, SUM(vi.quantidade) as qtd_vendida, SUM(vi.quantidade * vi.preco_unitario) as valor_gerado
             FROM vendas_itens vi
             JOIN produtos p ON vi.id_produto = p.id_produto
+            WHERE vi.id_empresa = ?
             GROUP BY p.id_produto, p.nome_produto
             ORDER BY qtd_vendida DESC
             LIMIT 10
         ");
+        $stmtTopProdutos->execute([$idEmpresa]);
         $topProdutosList = $stmtTopProdutos->fetchAll(PDO::FETCH_ASSOC);
         
         // Produtos Vencendo em 7 dias
-        $stmtVencendo = $db->query("SELECT nome_produto, data_validade, quantidade_estoque 
+        $stmtVencendo = $db->prepare("SELECT nome_produto, data_validade, quantidade_estoque 
                                     FROM produtos 
                                     WHERE data_validade IS NOT NULL 
-                                    AND data_validade != '' 
-                                    AND data_validade <= date('now', '+7 days') 
+                                    AND data_validade <= CURRENT_DATE + INTERVAL '7 days' 
                                     AND quantidade_estoque > 0
+                                    AND id_empresa = ?
                                     ORDER BY data_validade ASC");
+        $stmtVencendo->execute([$idEmpresa]);
         $vencendo = $stmtVencendo->fetchAll(PDO::FETCH_ASSOC);
         
         $stats = [

@@ -22,6 +22,12 @@
                     <i class="ph ph-warning-circle"></i> <?= htmlspecialchars($error) ?>
                 </div>
             <?php endif; ?>
+            
+            <?php if(isset($_GET['msg'])): ?>
+                <div class="alert alert-success" style="background-color: #d1fae5; color: #065f46; padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                    <i class="ph ph-check-circle"></i> <?= htmlspecialchars($_GET['msg']) ?>
+                </div>
+            <?php endif; ?>
 
             <form action="/login" method="POST" class="animate-fade-up delay-200">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
@@ -29,6 +35,14 @@
                 <!-- Cibersegurança: Bot Protection (Honeypot) - Item 13 -->
                 <div style="display:none;" aria-hidden="true">
                     <input type="text" name="website" tabindex="-1" autocomplete="off">
+                </div>
+                
+                <div class="input-group">
+                    <label for="codigo_acesso">Código da Empresa</label>
+                    <div class="input-icon-wrapper">
+                        <i class="ph ph-buildings"></i>
+                        <input type="text" id="codigo_acesso" name="codigo_acesso" placeholder="Ex: A3F8E2" required>
+                    </div>
                 </div>
                 
                 <div class="input-group">
