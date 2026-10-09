@@ -38,7 +38,7 @@ header("X-Frame-Options: SAMEORIGIN"); // Previne Clickjacking
 header("X-XSS-Protection: 1; mode=block"); // Proteção anti-XSS do navegador
 header("X-Content-Type-Options: nosniff"); // Impede MIME-sniffing
 header("Referrer-Policy: strict-origin-when-cross-origin");
-header("Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; img-src 'self' data: https:; font-src 'self' data: https://cdn.jsdelivr.net;"); // Item 18
+header("Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com;"); // Item 18
 
 // Carrega o autoloader do Composer
 require_once __DIR__ . '/../vendor/autoload.php';
