@@ -198,62 +198,62 @@
             </div>
             
             <div class="flex flex-col md:flex-row justify-center gap-6 max-w-4xl mx-auto">
-                <!-- Plano Essencial -->
+                <!-- Plano Mensal -->
                 <div class="glass-panel p-8 flex-1">
-                    <h3 class="text-lg font-bold text-slate-900 mb-2">Essencial</h3>
-                    <p class="text-gray-500 text-sm mb-6 h-10">Para comércios que precisam organizar o caixa.</p>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Plano Mensal</h3>
+                    <p class="text-gray-500 text-sm mb-6 h-10">Flexibilidade sem fidelidade para o seu negócio.</p>
                     <div class="mb-6">
-                        <span class="text-3xl font-bold text-slate-900">R$ 67</span>
+                        <span class="text-3xl font-bold text-slate-900">R$ 97</span>
                         <span class="text-gray-500 text-sm">/mês</span>
                     </div>
                     <ul class="space-y-3 mb-8 text-sm">
                         <li class="flex items-center gap-2 text-gray-700">
-                            <i class="ph ph-check text-emerald-600"></i> PDV Rápido
+                            <i class="ph ph-check text-emerald-600"></i> Frente de Caixa (PDV) Rápido
                         </li>
                         <li class="flex items-center gap-2 text-gray-700">
-                            <i class="ph ph-check text-emerald-600"></i> Controle de Estoque
+                            <i class="ph ph-check text-emerald-600"></i> Controle de Estoque Completo
                         </li>
                         <li class="flex items-center gap-2 text-gray-700">
-                            <i class="ph ph-check text-emerald-600"></i> 1 Usuário
-                        </li>
-                        <li class="flex items-center gap-2 text-gray-400 line-through">
-                            <i class="ph ph-x text-gray-300"></i> Módulo de Fiado
+                            <i class="ph ph-check text-emerald-600"></i> Módulo de Fiado Integrado
                         </li>
                     </ul>
-                    <a href="/registro" class="block w-full text-center bg-white border border-gray-300 hover:bg-gray-50 text-slate-900 font-medium py-2 rounded-md transition-colors">
-                        Começar Essencial
+                    <a href="/registro?plano=mensal" class="block w-full text-center bg-white border border-gray-300 hover:bg-gray-50 text-slate-900 font-medium py-2 rounded-md transition-colors">
+                        Começar Mensal
                     </a>
                 </div>
 
-                <!-- Plano Profissional -->
+                <!-- Plano Anual -->
                 <div class="glass-panel p-8 flex-1 border-slate-900 relative">
                     <div class="absolute top-0 right-0 bg-slate-900 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-md">
-                        Recomendado
+                        2 Meses Grátis
                     </div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-2">Profissional</h3>
-                    <p class="text-gray-500 text-sm mb-6 h-10">Para operação completa com gestão de crediário.</p>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Plano Anual</h3>
+                    <p class="text-gray-500 text-sm mb-6 h-10">O melhor custo-benefício. Garanta estabilidade no preço.</p>
                     <div class="mb-6">
-                        <span class="text-3xl font-bold text-slate-900">R$ 127</span>
-                        <span class="text-gray-500 text-sm">/mês</span>
+                        <span class="text-3xl font-bold text-slate-900">R$ 970</span>
+                        <span class="text-gray-500 text-sm">/ano</span>
                     </div>
                     <ul class="space-y-3 mb-8 text-sm">
                         <li class="flex items-center gap-2 text-gray-700">
-                            <i class="ph ph-check text-emerald-600"></i> Tudo do plano Essencial
+                            <i class="ph ph-check text-emerald-600"></i> Tudo do plano Mensal
                         </li>
                         <li class="flex items-center gap-2 text-gray-700 font-medium">
-                            <i class="ph ph-check text-emerald-600"></i> Módulo Completo de Fiado
-                        </li>
-                        <li class="flex items-center gap-2 text-gray-700">
-                            <i class="ph ph-check text-emerald-600"></i> Usuários Ilimitados
+                            <i class="ph ph-check text-emerald-600"></i> Economia de quase R$ 200 no ano
                         </li>
                         <li class="flex items-center gap-2 text-gray-700">
                             <i class="ph ph-check text-emerald-600"></i> Suporte Prioritário
                         </li>
                     </ul>
-                    <a href="/registro" class="block w-full text-center bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 rounded-md transition-colors">
-                        Começar Profissional
+                    <a href="/registro?plano=anual" class="block w-full text-center bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 rounded-md transition-colors">
+                        Começar Anual
                     </a>
                 </div>
+            </div>
+            
+            <div class="text-center mt-10">
+                <p class="text-sm text-gray-500">
+                    * Precisa de ajuda com cadastro de produtos e treinamento? <br class="md:hidden" /> Oferecemos um pacote VIP de Implantação por apenas <strong>R$ 497</strong> (Taxa Única).
+                </p>
             </div>
         </div>
     </section>

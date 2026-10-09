@@ -22,6 +22,7 @@
     <?php endif; ?>
 
     <form method="POST" action="/registro">
+        <input type="hidden" name="plano" value="<?= htmlspecialchars($_GET['plano'] ?? 'mensal') ?>">
         <div class="mb-4">
             <label class="block text-gray-700 text-sm font-bold mb-2">Nome da Empresa</label>
             <input type="text" name="razao_social" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Minha Loja">

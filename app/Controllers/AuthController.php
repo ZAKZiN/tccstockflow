@@ -104,6 +104,7 @@ class AuthController extends Controller {
             $nome = $_POST['nome'] ?? '';
             $login = $_POST['login'] ?? '';
             $senha = $_POST['senha'] ?? '';
+            $plano = $_POST['plano'] ?? 'mensal';
 
             if (empty($razao_social) || empty($nome) || empty($login) || empty($senha)) {
                 header('Location: /registro?error=' . urlencode('Preencha todos os campos'));
@@ -116,8 +117,8 @@ class AuthController extends Controller {
 
                 $codigo_acesso = strtoupper(substr(md5(uniqid()), 0, 6)); // E.g. A3F8E2
 
-                // 1. Cria a empresa
-                $stmt = $db->prepare("INSERT INTO empresas (razao_social, codigo_acesso) VALUES (?, ?) RETURNING id_empresa");
+                // 1. Cria a empresa (sempre como pendente até o pagamento)
+                $stmt = $db->prepare("INSERT INTO empresas (razao_social, codigo_acesso, status_assinatura) VALUES (?, ?, 'pendente') RETURNING id_empresa");
                 $stmt->execute([$razao_social, $codigo_acesso]);
                 $empresa = $stmt->fetch(\PDO::FETCH_ASSOC);
                 
@@ -133,7 +134,12 @@ class AuthController extends Controller {
                 $stmtUser->execute([$id_empresa, $nome, $login, $senhaHash]);
 
                 $db->commit();
-                header('Location: /?msg=' . urlencode("Conta criada com sucesso! O Código da sua Empresa é: {$codigo_acesso}. Guarde-o para o Login!"));
+                
+                // Redirecionamento Cakto Checkout
+                $checkoutBaseUrl = ($plano === 'anual') ? $_ENV['CAKTO_CHECKOUT_ANUAL'] : $_ENV['CAKTO_CHECKOUT_MENSAL'];
+                $urlCheckout = $checkoutBaseUrl . "?email=" . urlencode($login . "@temp.com") . "&external_reference=" . $id_empresa;
+                
+                header('Location: ' . $urlCheckout);
                 exit;
             } catch (\Exception $e) {
                 $db->rollBack();
