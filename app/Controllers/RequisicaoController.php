@@ -3,22 +3,19 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Database;
+use App\Helpers\AuditHelper;
 use App\Models\Requisicao;
 use App\Models\Notificacao;
+use PDO;
 
 class RequisicaoController extends Controller {
     
     public function index() {
-        if (!isset($_SESSION['usuario_id'])) {
-            $this->redirect('/dashboard');
-        }
+        $nivel = $_SESSION['usuario_nivel'] ?? '';
         
-        $nivel = $_SESSION['usuario_nivel'];
-        
-        // Regra de Negócio: Solicitante e Coordenador veem apenas do seu setor
-        // Almoxarife e Admin veem de todos
-        if (in_array($nivel, ['Solicitante', 'Coordenador'])) {
-            $requisicoes = Requisicao::getBySetor($_SESSION['usuario_id_setor']);
+        if (in_array($nivel, ['Solicitante', 'Coordenador'], true)) {
+            $requisicoes = Requisicao::getBySetor($_SESSION['usuario_id_setor'] ?? null, $_SESSION['usuario_nome'] ?? '');
         } else {
             $requisicoes = Requisicao::getAll();
         }
@@ -28,9 +25,18 @@ class RequisicaoController extends Controller {
             header('Content-Disposition: attachment; filename=requisicoes_export.csv');
             $output = fopen('php://output', 'w');
             fputs($output, "\xEF\xBB\xBF");
-            fputcsv($output, ['ID', 'Material', 'Quantidade', 'Solicitante', 'Setor', 'Status', 'Data'], ';');
+            fputcsv($output, ['ID', 'Material', 'Quantidade', 'Prioridade', 'Solicitante', 'Setor', 'Status', 'Data'], ';', '"', '');
             foreach ($requisicoes as $r) {
-                fputcsv($output, [$r['id_requisicao'], $r['material'], $r['quantidade'], $r['solicitante'], $r['nome_setor'], $r['status'], date('d/m/Y H:i', strtotime($r['data_solicitacao']))], ';');
+                fputcsv($output, $this->sanitizeCsvRow([
+                    $r['id_requisicao'],
+                    $r['material'],
+                    $r['quantidade'],
+                    $r['prioridade'] ?? 'Média',
+                    $r['solicitante'],
+                    $r['nome_setor'] ?? 'Geral',
+                    $r['status'],
+                    date('d/m/Y H:i', strtotime($r['data_solicitacao']))
+                ]), ';', '"', '');
             }
             fclose($output);
             exit;
@@ -40,137 +46,174 @@ class RequisicaoController extends Controller {
     }
     
     public function create() {
-        if (!isset($_SESSION['usuario_id'])) {
-            $this->redirect('/');
-        }
-        
+        $db = Database::getConnection();
+        $produtosCatalogo = $db->query("SELECT nome_produto FROM produtos ORDER BY nome_produto ASC")->fetchAll(PDO::FETCH_COLUMN);
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $material = trim($_POST['material'] ?? '');
+            $quantidade = round(floatval(str_replace(',', '.', $_POST['quantidade'] ?? '1')), 3);
+            $prioridade = $_POST['prioridade'] ?? 'Média';
+            if (!in_array($prioridade, ['Baixa', 'Média', 'Alta', 'Urgente'], true)) {
+                $prioridade = 'Média';
+            }
+
+            if ($material === '' || $quantidade <= 0) {
+                $this->redirect('/requisicoes/nova?error=' . urlencode('Informe o material e uma quantidade válida.'));
+            }
+
             $dados = [
                 'solicitante' => $_SESSION['usuario_nome'],
-                'id_setor' => $_SESSION['usuario_id_setor'],
-                'material' => $_POST['material'] ?? '',
-                'quantidade' => $_POST['quantidade'] ?? 1,
-                'prioridade' => $_POST['prioridade'] ?? 'Média',
-                'justificativa' => $_POST['justificativa'] ?? ''
+                'id_setor' => $_SESSION['usuario_id_setor'] ?? null,
+                'material' => $material,
+                'quantidade' => $quantidade,
+                'prioridade' => $prioridade,
+                'justificativa' => trim($_POST['justificativa'] ?? '')
             ];
             
-            Requisicao::create($dados);
+            $idReq = Requisicao::create($dados);
+            AuditHelper::log('requisicoes', (int)$idReq, 'CRIAR_REQUISICAO', "Solicitação de {$quantidade}x '{$material}' (Prioridade: {$prioridade})");
             
-            // Notificar Coordenador
             Notificacao::create(
-                "Nova Requisição: {$_POST['material']}", 
-                "{$_SESSION['usuario_nome']} solicitou {$_POST['quantidade']} unidade(s).",
+                "Nova Requisição #{$idReq}: {$material}", 
+                "{$_SESSION['usuario_nome']} solicitou {$quantidade} unidade(s).",
                 null, 
                 'Coordenador'
             );
             
-            $this->redirect('/requisicoes');
+            $this->redirect('/requisicoes?success=' . urlencode('Requisição enviada para aprovação!'));
         }
         
-        $this->view('requisicoes/create');
+        $this->view('requisicoes/create', ['produtosCatalogo' => $produtosCatalogo]);
     }
     
     public function approve($id) {
-        if (!isset($_SESSION['usuario_id'])) {
-            $this->redirect('/dashboard');
+        $nivel = $_SESSION['usuario_nivel'] ?? '';
+        if (!in_array($nivel, ['Coordenador', 'Gerente', 'Administrador'], true)) {
+            $this->redirect('/requisicoes?error=' . urlencode('Você não tem permissão para aprovar requisições.'));
+        }
+
+        $idReq = (int)$id;
+        $req = Requisicao::find($idReq);
+        if (!$req || $req['status'] !== 'Pendente Coordenador') {
+            $this->redirect('/requisicoes?error=' . urlencode('Esta requisição não está pendente de aprovação.'));
+        }
+
+        if ($nivel === 'Coordenador' && !empty($_SESSION['usuario_id_setor']) && (int)$req['id_setor'] !== (int)$_SESSION['usuario_id_setor']) {
+            $this->redirect('/requisicoes?error=' . urlencode('Coordenadores só podem aprovar requisições do próprio setor.'));
         }
         
         try {
-            Requisicao::updateStatus($id, 'Pendente Almoxarifado');
+            Requisicao::updateStatus($idReq, 'Pendente Almoxarifado', $_SESSION['usuario_nome']);
+            AuditHelper::log('requisicoes', $idReq, 'APROVAR_REQUISICAO', "Requisição #{$idReq} ({$req['material']}) aprovada");
             
+            // Corrigido: o cargo real do sistema é 'Estoquista' (anteriormente enviava para 'Almoxarife')
             Notificacao::create(
-                "Requisição Aprovada", 
-                "A requisição #{$id} foi aprovada e enviada ao Almoxarifado.",
+                "Requisição #{$idReq} Aprovada", 
+                "A requisição de {$req['quantidade']}x {$req['material']} aguarda atendimento no Estoque.",
                 null, 
-                'Almoxarife'
+                'Estoquista'
             );
-            $this->redirect('/requisicoes?success=' . urlencode('Requisição aprovada.'));
+            $this->redirect('/requisicoes?success=' . urlencode('Requisição aprovada e encaminhada ao Estoque!'));
         } catch (\Exception $e) {
+            error_log('Erro ao aprovar requisição: ' . $e->getMessage());
             $this->redirect('/requisicoes?error=' . urlencode('Erro ao aprovar requisição.'));
         }
     }
 
     public function reject($id) {
-        if (!isset($_SESSION['usuario_id'])) {
-            $this->redirect('/dashboard');
+        $nivel = $_SESSION['usuario_nivel'] ?? '';
+        if (!in_array($nivel, ['Coordenador', 'Gerente', 'Administrador'], true)) {
+            $this->redirect('/requisicoes?error=' . urlencode('Você não tem permissão para recusar requisições.'));
+        }
+
+        $idReq = (int)$id;
+        $req = Requisicao::find($idReq);
+        if (!$req || $req['status'] !== 'Pendente Coordenador') {
+            $this->redirect('/requisicoes?error=' . urlencode('Esta requisição não pode mais ser recusada.'));
+        }
+
+        if ($nivel === 'Coordenador' && !empty($_SESSION['usuario_id_setor']) && (int)$req['id_setor'] !== (int)$_SESSION['usuario_id_setor']) {
+            $this->redirect('/requisicoes?error=' . urlencode('Coordenadores só podem avaliar requisições do próprio setor.'));
         }
         
         try {
-            Requisicao::updateStatus($id, 'Recusado');
+            Requisicao::updateStatus($idReq, 'Recusado', $_SESSION['usuario_nome']);
+            AuditHelper::log('requisicoes', $idReq, 'RECUSAR_REQUISICAO', "Requisição #{$idReq} ({$req['material']}) recusada");
+
             Notificacao::create(
-                "Requisição Recusada", 
-                "A requisição #{$id} foi recusada pelo Coordenador.",
+                "Requisição #{$idReq} Recusada", 
+                "A requisição de {$req['material']} foi recusada pela coordenação.",
                 null, 
                 'Solicitante'
             );
             $this->redirect('/requisicoes?success=' . urlencode('Requisição recusada.'));
         } catch (\Exception $e) {
+            error_log('Erro ao recusar requisição: ' . $e->getMessage());
             $this->redirect('/requisicoes?error=' . urlencode('Erro ao recusar requisição.'));
         }
     }
 
     public function despachar($id) {
-        if (!isset($_SESSION['usuario_id'])) {
-            $this->redirect('/dashboard');
+        $nivel = $_SESSION['usuario_nivel'] ?? '';
+        if (!in_array($nivel, ['Estoquista', 'Gerente', 'Administrador'], true)) {
+            $this->redirect('/requisicoes?error=' . urlencode('Apenas o Estoque ou Administração pode despachar materiais.'));
+        }
+
+        $idReq = (int)$id;
+        $db = Database::getConnection();
+        
+        $req = Requisicao::find($idReq);
+        if (!$req || !in_array($req['status'], ['Pendente Almoxarifado', 'Compra Efetuada'], true)) {
+            $this->redirect('/requisicoes?error=' . urlencode('Esta requisição não está apta para despacho ou já foi despachada.'));
         }
         
-        $db = \App\Core\Database::getConnection();
-        
-        // Buscar a requisição
-        $stmt = $db->prepare("SELECT * FROM requisicoes WHERE id_requisicao = ?");
-        $stmt->execute([$id]);
-        $req = $stmt->fetch(\PDO::FETCH_ASSOC);
-        
-        if ($req) {
-            try {
-                $db->beginTransaction();
-                
-                // Mudar status para Despachado
-                $stmtUpdate = $db->prepare("UPDATE requisicoes SET status = 'Despachado' WHERE id_requisicao = ?");
-                $stmtUpdate->execute([$id]);
-                
-                // Tentar encontrar o produto no estoque com o mesmo nome exato
-                $stmtProd = $db->prepare("SELECT id_produto, quantidade_estoque FROM produtos WHERE nome_produto = ? COLLATE NOCASE");
-                $stmtProd->execute([$req['material']]);
-                $produto = $stmtProd->fetch(\PDO::FETCH_ASSOC);
-                
-                if ($produto) {
-                    if ($produto['quantidade_estoque'] < $req['quantidade']) {
-                        throw new \Exception("Estoque insuficiente para despachar. (Atual: {$produto['quantidade_estoque']})");
-                    }
-                    
-                    // Dar baixa no estoque
-                    $novaQtd = $produto['quantidade_estoque'] - $req['quantidade'];
-                    $stmtEstoque = $db->prepare("UPDATE produtos SET quantidade_estoque = ? WHERE id_produto = ?");
-                    $stmtEstoque->execute([$novaQtd, $produto['id_produto']]);
-                    
-                    // Registrar no Kardex
-                    $sqlMov = "INSERT INTO movimentacoes_estoque (id_produto, id_usuario, tipo, quantidade, observacao) VALUES (?, ?, 'Saída', ?, ?)";
-                    $stmtMov = $db->prepare($sqlMov);
-                    $stmtMov->execute([
-                        $produto['id_produto'], 
-                        $_SESSION['usuario_id'], 
-                        $req['quantidade'], 
-                        "Requisição #{$id} despachada ao setor"
-                    ]);
+        try {
+            $agora = date('Y-m-d H:i:s');
+            $db->beginTransaction();
+            
+            // Encontrar o produto no estoque pelo nome (case-insensitive)
+            $stmtProd = $db->prepare("SELECT id_produto, nome_produto, quantidade_estoque FROM produtos WHERE nome_produto = ? COLLATE NOCASE");
+            $stmtProd->execute([trim($req['material'])]);
+            $produto = $stmtProd->fetch(PDO::FETCH_ASSOC);
+            
+            if ($produto) {
+                if ((float)$produto['quantidade_estoque'] < (float)$req['quantidade']) {
+                    throw new \Exception("Estoque insuficiente de '{$produto['nome_produto']}' para despachar (Saldo atual: {$produto['quantidade_estoque']}). Registre uma Ordem de Compra primeiro.");
                 }
                 
-                $db->commit();
+                $novaQtd = round((float)$produto['quantidade_estoque'] - (float)$req['quantidade'], 3);
+                $stmtEstoque = $db->prepare("UPDATE produtos SET quantidade_estoque = ?, atualizado_em = ? WHERE id_produto = ?");
+                $stmtEstoque->execute([$novaQtd, $agora, $produto['id_produto']]);
                 
-                Notificacao::create(
-                    "Requisição Despachada", 
-                    "Sua requisição #{$id} ({$req['material']}) foi despachada.",
-                    null, 
-                    'Solicitante'
-                );
-                
-                $this->redirect('/requisicoes?success=' . urlencode('Requisição despachada com sucesso!'));
-            } catch (\Exception $e) {
-                $db->rollBack();
-                $this->redirect('/requisicoes?error=' . urlencode('Erro ao despachar: ' . $e->getMessage()));
+                $sqlMov = "INSERT INTO movimentacoes_estoque (id_produto, id_usuario, tipo, quantidade, observacao, data_movimentacao) VALUES (?, ?, 'Saída', ?, ?, ?)";
+                $stmtMov = $db->prepare($sqlMov);
+                $stmtMov->execute([
+                    $produto['id_produto'], 
+                    $_SESSION['usuario_id'], 
+                    $req['quantidade'], 
+                    "Requisição #{$idReq} despachada ao setor solicitante",
+                    $agora
+                ]);
             }
-        } else {
-            $this->redirect('/requisicoes');
+
+            $stmtUpdate = $db->prepare("UPDATE requisicoes SET status = 'Despachado', atualizado_em = ? WHERE id_requisicao = ?");
+            $stmtUpdate->execute([$agora, $idReq]);
+            Requisicao::registrarHistorico($idReq, 'Material despachado ao setor solicitante', $_SESSION['usuario_nome']);
+            
+            $db->commit();
+            AuditHelper::log('requisicoes', $idReq, 'DESPACHAR_REQUISICAO', "Requisição #{$idReq} ({$req['material']}) despachada");
+            
+            Notificacao::create(
+                "Requisição #{$idReq} Despachada", 
+                "Sua requisição ({$req['material']}) foi atendida e despachada pelo Estoque.",
+                null, 
+                'Solicitante'
+            );
+            
+            $this->redirect('/requisicoes?success=' . urlencode('Requisição despachada com sucesso!'));
+        } catch (\Exception $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            $this->redirect('/requisicoes?error=' . urlencode($e->getMessage()));
         }
     }
 }

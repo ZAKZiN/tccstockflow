@@ -20,8 +20,10 @@ class NotificacaoController extends Controller {
     }
     
     public function markAsRead($id) {
+        header('Content-Type: application/json');
+
         if (isset($_SESSION['usuario_id'])) {
-            Notificacao::markAsRead($id, $_SESSION['usuario_id'], $_SESSION['usuario_nivel']);
+            Notificacao::markAsRead((int)$id, $_SESSION['usuario_id'], $_SESSION['usuario_nivel']);
         }
         echo json_encode(['success' => true]);
     }

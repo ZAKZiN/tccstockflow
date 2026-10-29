@@ -2,33 +2,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const topbar = document.querySelector('.topbar');
     if (!topbar) return;
 
-    // Criar o container do sino
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
     const notifContainer = document.createElement('div');
+    notifContainer.className = 'notif-bell-wrapper';
     notifContainer.style.position = 'relative';
     notifContainer.style.marginLeft = 'auto';
-    notifContainer.style.marginRight = '1rem';
     notifContainer.style.cursor = 'pointer';
     notifContainer.style.display = 'flex';
     notifContainer.style.alignItems = 'center';
+    notifContainer.style.padding = '0.35rem';
 
     const bellIcon = document.createElement('i');
     bellIcon.className = 'ph ph-bell';
-    bellIcon.style.fontSize = '1.5rem';
+    bellIcon.style.fontSize = '1.45rem';
     bellIcon.style.color = 'var(--text-secondary)';
     
     const badge = document.createElement('span');
     badge.style.position = 'absolute';
-    badge.style.top = '-5px';
-    badge.style.right = '-5px';
+    badge.style.top = '-2px';
+    badge.style.right = '-2px';
     badge.style.backgroundColor = 'var(--danger)';
     badge.style.color = 'white';
-    badge.style.borderRadius = '50%';
-    badge.style.padding = '0.15rem 0.35rem';
-    badge.style.fontSize = '0.7rem';
+    badge.style.borderRadius = '9999px';
+    badge.style.padding = '0.1rem 0.38rem';
+    badge.style.fontSize = '0.68rem';
     badge.style.fontWeight = 'bold';
     badge.style.display = 'none';
 
-    // Dropdown
     const dropdown = document.createElement('div');
     dropdown.className = 'glass-panel';
     dropdown.style.position = 'absolute';
@@ -37,33 +38,38 @@ document.addEventListener('DOMContentLoaded', () => {
     dropdown.style.width = '320px';
     dropdown.style.maxHeight = '400px';
     dropdown.style.overflowY = 'auto';
-    dropdown.style.zIndex = '100';
+    dropdown.style.zIndex = '1050';
     dropdown.style.display = 'none';
     dropdown.style.padding = '1rem';
     dropdown.style.marginTop = '0.5rem';
+    dropdown.style.cursor = 'default';
 
     notifContainer.appendChild(bellIcon);
     notifContainer.appendChild(badge);
     notifContainer.appendChild(dropdown);
     
-    topbar.insertBefore(notifContainer, topbar.children[1]);
+    if (topbar.children.length > 1) {
+        topbar.insertBefore(notifContainer, topbar.children[1]);
+    } else {
+        topbar.appendChild(notifContainer);
+    }
 
-    // Lógica de Fetch
     async function loadNotifications() {
         try {
-            const res = await fetch('/api/notificacoes');
-            if(!res.ok) return;
+            const res = await fetch('/api/notificacoes', { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) return;
             const data = await res.json();
             
-            dropdown.innerHTML = '';
-            if (data.length > 0) {
+            dropdown.replaceChildren();
+            if (Array.isArray(data) && data.length > 0) {
                 badge.style.display = 'block';
-                badge.innerText = data.length;
+                badge.textContent = String(data.length);
                 
                 const title = document.createElement('h4');
-                title.innerText = 'Notificações';
-                title.style.marginBottom = '1rem';
-                title.style.fontSize = '1rem';
+                title.textContent = 'Notificações';
+                title.style.marginBottom = '0.85rem';
+                title.style.fontSize = '0.95rem';
+                title.style.fontWeight = '600';
                 dropdown.appendChild(title);
 
                 data.forEach(n => {
@@ -71,16 +77,43 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.style.borderBottom = '1px solid var(--border-subtle)';
                     item.style.paddingBottom = '0.75rem';
                     item.style.marginBottom = '0.75rem';
-                    
-                    item.innerHTML = `
-                        <strong style="display:block; font-size:0.85rem; color:var(--text-primary); margin-bottom:0.25rem;">${n.titulo}</strong>
-                        <span style="font-size:0.8rem; color:var(--text-secondary); display:block; line-height:1.4;">${n.mensagem}</span>
-                        <div style="font-size:0.7rem; color:var(--text-secondary); text-align:right; margin-top:0.5rem;">Clique para marcar como lida</div>
-                    `;
+                    item.style.cursor = 'pointer';
+
+                    // Construção via DOM segura contra XSS (textContent em vez de innerHTML)
+                    const strong = document.createElement('strong');
+                    strong.style.display = 'block';
+                    strong.style.fontSize = '0.85rem';
+                    strong.style.color = 'var(--text-primary)';
+                    strong.style.marginBottom = '0.25rem';
+                    strong.textContent = n.titulo || '';
+
+                    const msg = document.createElement('span');
+                    msg.style.fontSize = '0.8rem';
+                    msg.style.color = 'var(--text-secondary)';
+                    msg.style.display = 'block';
+                    msg.style.lineHeight = '1.4';
+                    msg.textContent = n.mensagem || '';
+
+                    const hint = document.createElement('div');
+                    hint.style.fontSize = '0.7rem';
+                    hint.style.color = 'var(--primary)';
+                    hint.style.textAlign = 'right';
+                    hint.style.marginTop = '0.45rem';
+                    hint.textContent = 'Clique para marcar como lida';
+
+                    item.appendChild(strong);
+                    item.appendChild(msg);
+                    item.appendChild(hint);
                     
                     item.addEventListener('click', async (e) => {
                         e.stopPropagation();
-                        await fetch('/api/notificacoes/ler/' + n.id_notificacao, {method: 'POST'});
+                        await fetch('/api/notificacoes/ler/' + encodeURIComponent(n.id_notificacao), {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-Token': csrfToken,
+                                'Accept': 'application/json'
+                            }
+                        });
                         loadNotifications();
                     });
                     
@@ -88,9 +121,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             } else {
                 badge.style.display = 'none';
-                dropdown.innerHTML = '<span style="font-size:0.85rem; color:var(--text-secondary)">Nenhuma notificação nova.</span>';
+                const empty = document.createElement('span');
+                empty.style.fontSize = '0.85rem';
+                empty.style.color = 'var(--text-secondary)';
+                empty.textContent = 'Nenhuma notificação nova.';
+                dropdown.appendChild(empty);
             }
-        } catch(e) {}
+        } catch (e) {
+            // Falha silenciosa de rede
+        }
     }
 
     notifContainer.addEventListener('click', () => {
@@ -104,5 +143,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     loadNotifications();
-    setInterval(loadNotifications, 30000); 
+    setInterval(loadNotifications, 30000);
 });

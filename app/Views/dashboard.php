@@ -5,24 +5,30 @@
                 <div class="user-profile">
                     <div class="user-info">
                         <strong><?= htmlspecialchars($_SESSION['usuario_nome']) ?></strong>
-                        <span><?= htmlspecialchars($_SESSION['usuario_nivel']) ?><?= !empty($_SESSION['usuario_setor']) ? ' - ' . htmlspecialchars($_SESSION['usuario_setor']) : '' ?></span>
+                        <span><?= htmlspecialchars($_SESSION['usuario_nivel']) ?><?= !empty($_SESSION['usuario_setor']) ? ' • ' . htmlspecialchars($_SESSION['usuario_setor']) : '' ?></span>
                     </div>
                     <div class="avatar">
-                        <?= substr(htmlspecialchars($_SESSION['usuario_nome']), 0, 1) ?>
+                        <?= htmlspecialchars(mb_strtoupper(mb_substr($_SESSION['usuario_nome'], 0, 1, 'UTF-8'), 'UTF-8')) ?>
                     </div>
                 </div>
             </header>
 
+            <?php if(isset($_GET['error'])): ?>
+                <div class="alert alert-error animate-fade-up">
+                    <i class="ph ph-warning-circle"></i> <?= htmlspecialchars($_GET['error']) ?>
+                </div>
+            <?php endif; ?>
+
             <?php if(!empty($stats['vencendo'])): ?>
-                <div class="alert alert-error animate-fade-up" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; background-color: var(--danger-bg); border-left: 4px solid var(--danger); padding: 1rem; border-radius: 8px;">
-                    <div style="font-weight: 600; font-size: 1.1rem; color: var(--danger);"><i class="ph ph-warning"></i> Atenção: Prevenção de Perdas!</div>
-                    <div style="color: var(--text-primary);">Você possui <?= count($stats['vencendo']) ?> produto(s) vencendo em 7 dias ou menos. Sugestão: Faça uma promoção!</div>
-                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem; list-style-type: disc; color: var(--text-secondary);">
+                <div class="alert alert-error animate-fade-up" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-bottom: 1.5rem; border-left: 4px solid var(--danger);">
+                    <div style="font-weight: 600; font-size: 1.05rem; color: var(--danger);"><i class="ph ph-warning"></i> Atenção: Prevenção de Perdas!</div>
+                    <div style="color: var(--text-primary);">Você possui <?= count($stats['vencendo']) ?> produto(s) vencido(s) ou vencendo em até 7 dias.</div>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.25rem; margin-bottom: 0; list-style-type: disc; color: var(--text-secondary);">
                         <?php foreach($stats['vencendo'] as $vp): ?>
                             <li>
-                                <strong style="color: var(--text-primary);"><?= htmlspecialchars($vp['nome_produto']) ?></strong> - 
-                                Vence em: <?= date('d/m/Y', strtotime($vp['data_validade'])) ?> 
-                                (<?= $vp['quantidade_estoque'] ?> unid. em estoque)
+                                <strong style="color: var(--text-primary);"><?= htmlspecialchars($vp['nome_produto']) ?></strong> — 
+                                Validade: <?= date('d/m/Y', strtotime($vp['data_validade'])) ?> 
+                                (<?= rtrim(rtrim(number_format((float)$vp['quantidade_estoque'], 3, ',', '.'), '0'), ',') ?> em estoque)
                             </li>
                         <?php endforeach; ?>
                     </ul>
@@ -30,15 +36,15 @@
             <?php endif; ?>
 
             <?php if(!empty($stats['estoque_critico_list'])): ?>
-                <div class="alert alert-error animate-fade-up" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; background-color: rgba(245, 158, 11, 0.15); border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 8px;">
-                    <div style="font-weight: 600; font-size: 1.1rem; color: #d97706;"><i class="ph ph-warning-circle"></i> Atenção: Estoque Crítico!</div>
-                    <div style="color: var(--text-primary);">Você possui <?= count($stats['estoque_critico_list']) ?> produto(s) no estoque mínimo ou abaixo. É hora de fazer novas requisições!</div>
-                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem; list-style-type: disc; color: var(--text-secondary);">
+                <div class="alert alert-warning animate-fade-up" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-bottom: 1.5rem; border-left: 4px solid var(--warning);">
+                    <div style="font-weight: 600; font-size: 1.05rem; color: var(--warning);"><i class="ph ph-warning-circle"></i> Atenção: Estoque Crítico!</div>
+                    <div style="color: var(--text-primary);">Você possui <?= count($stats['estoque_critico_list']) ?> produto(s) no estoque mínimo ou abaixo.</div>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.25rem; margin-bottom: 0; list-style-type: disc; color: var(--text-secondary);">
                         <?php foreach($stats['estoque_critico_list'] as $ec): ?>
                             <li>
-                                <strong style="color: var(--text-primary);"><?= htmlspecialchars($ec['nome_produto']) ?></strong> - 
-                                Atual: <strong style="color: #ef4444;"><?= $ec['quantidade_estoque'] ?></strong> 
-                                (Mínimo: <?= $ec['estoque_minimo'] ?>)
+                                <strong style="color: var(--text-primary);"><?= htmlspecialchars($ec['nome_produto']) ?></strong> — 
+                                Atual: <strong style="color: var(--danger);"><?= rtrim(rtrim(number_format((float)$ec['quantidade_estoque'], 3, ',', '.'), '0'), ',') ?></strong> 
+                                (Mínimo: <?= rtrim(rtrim(number_format((float)$ec['estoque_minimo'], 3, ',', '.'), '0'), ',') ?>)
                             </li>
                         <?php endforeach; ?>
                     </ul>
@@ -57,16 +63,18 @@
                 </div>
                 
                 <?php 
-                    $faturamento = $stats['faturamento_hoje'] > 0 ? $stats['faturamento_hoje'] : 1; // previne div zero
-                    $margem = ($stats['lucro_hoje'] / $faturamento) * 100;
+                    $margem = $stats['faturamento_hoje'] > 0
+                        ? ($stats['lucro_hoje'] / $stats['faturamento_hoje']) * 100
+                        : 0;
+                    $corLucro = $stats['lucro_hoje'] >= 0 ? 'var(--success)' : 'var(--danger)';
                 ?>
-                <div class="stat-card glass-panel animate-fade-up delay-150" style="border-left: 4px solid #10b981;">
-                    <div class="stat-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.1);">
+                <div class="stat-card glass-panel animate-fade-up delay-150" style="border-left: 4px solid <?= $corLucro ?>;">
+                    <div class="stat-icon" style="color: <?= $corLucro ?>; background: var(--success-bg);">
                         <i class="ph ph-trend-up"></i>
                     </div>
                     <div class="stat-info">
                         <h3>R$ <?= number_format($stats['lucro_hoje'], 2, ',', '.') ?></h3>
-                        <p>Lucro Líquido Hoje <span style="font-size: 0.8rem; color: #10b981;">(<?= number_format($margem, 1, ',', '.') ?>%)</span></p>
+                        <p>Lucro Líquido Hoje <span style="font-size: 0.8rem; color: <?= $corLucro ?>;">(<?= number_format($margem, 1, ',', '.') ?>%)</span></p>
                     </div>
                 </div>
                 
@@ -75,7 +83,7 @@
                         <i class="ph ph-receipt"></i>
                     </div>
                     <div class="stat-info">
-                        <h3><?= $stats['vendas_hoje'] ?></h3>
+                        <h3><?= (int)$stats['vendas_hoje'] ?></h3>
                         <p>Vendas Realizadas Hoje</p>
                     </div>
                 </div>
@@ -85,7 +93,7 @@
                         <i class="ph ph-warning-circle"></i>
                     </div>
                     <div class="stat-info">
-                        <h3><?= $stats['estoque_critico'] ?></h3>
+                        <h3><?= (int)$stats['estoque_critico'] ?></h3>
                         <p>Itens em Estoque Crítico</p>
                     </div>
                 </div>
@@ -94,18 +102,18 @@
             <!-- Analytics Charts -->
             <div class="charts-grid animate-fade-up delay-400">
                 <div class="chart-container">
-                    <div class="chart-header">Evolução do Faturamento Mensal (R$)</div>
-                    <canvas id="lineChart" height="100"></canvas>
+                    <div class="chart-header"><i class="ph ph-chart-line"></i> Evolução do Faturamento Mensal (R$)</div>
+                    <canvas id="lineChart" height="110"></canvas>
                 </div>
                 <div class="chart-container">
-                    <div class="chart-header">Gráfico de Produtos Mais Vendidos</div>
+                    <div class="chart-header"><i class="ph ph-chart-donut"></i> Top 5 Produtos Vendidos</div>
                     <canvas id="doughnutChart" height="200"></canvas>
                 </div>
             </div>
 
             <!-- Tabela de Produtos com Mais Saídas -->
             <div class="glass-panel animate-fade-up delay-500" style="padding: 1.5rem; margin-bottom: 2rem;">
-                <div class="chart-header" style="margin-bottom: 1.5rem;"><i class="ph ph-trend-up"></i> Ranking: Produtos com Mais Saídas (Top 10)</div>
+                <div class="chart-header" style="margin-bottom: 1.25rem;"><i class="ph ph-trophy"></i> Ranking: Produtos com Mais Saídas (Top 10)</div>
                 <div class="table-container">
                     <table>
                         <thead>
@@ -124,10 +132,10 @@
                             <?php else: ?>
                                 <?php foreach($stats['top_produtos_list'] as $tp): ?>
                                     <tr>
-                                        <td style="color: var(--text-secondary);">#<?= str_pad($tp['id_produto'], 4, '0', STR_PAD_LEFT) ?></td>
+                                        <td style="color: var(--text-secondary);">#<?= str_pad((string)$tp['id_produto'], 4, '0', STR_PAD_LEFT) ?></td>
                                         <td style="font-weight: 500; color: var(--text-primary);"><?= htmlspecialchars($tp['nome_produto']) ?></td>
-                                        <td style="text-align: center; font-weight: 600; font-size: 1.1rem;"><?= $tp['qtd_vendida'] ?></td>
-                                        <td style="text-align: right; color: #10b981; font-weight: 600;">R$ <?= number_format($tp['valor_gerado'], 2, ',', '.') ?></td>
+                                        <td style="text-align: center; font-weight: 600; font-size: 1.05rem;"><?= rtrim(rtrim(number_format((float)$tp['qtd_vendida'], 3, ',', '.'), '0'), ',') ?></td>
+                                        <td style="text-align: right; color: var(--success); font-weight: 600;">R$ <?= number_format((float)$tp['valor_gerado'], 2, ',', '.') ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>
@@ -138,7 +146,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Line Chart (Requisitions per Month)
+        const isDark = document.body.classList.contains('dark-theme');
+        const gridColor = isDark ? '#334155' : '#e5e7eb';
+        const labelColor = isDark ? '#94a3b8' : '#4b5563';
+
         const ctxLine = document.getElementById('lineChart').getContext('2d');
         new Chart(ctxLine, {
             type: 'line',
@@ -148,7 +159,7 @@
                     label: 'Faturamento (R$)',
                     data: <?= $stats['chart_mensal'] ?>,
                     borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    backgroundColor: 'rgba(37, 99, 235, 0.12)',
                     borderWidth: 2,
                     tension: 0.3,
                     fill: true
@@ -158,13 +169,12 @@
                 responsive: true,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { beginAtZero: true, grid: { color: '#e5e7eb' } },
-                    x: { grid: { display: false } }
+                    y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: labelColor } },
+                    x: { grid: { display: false }, ticks: { color: labelColor } }
                 }
             }
         });
 
-        // Doughnut Chart (Top Products)
         const ctxDoughnut = document.getElementById('doughnutChart').getContext('2d');
         new Chart(ctxDoughnut, {
             type: 'doughnut',
@@ -178,9 +188,9 @@
             },
             options: {
                 responsive: true,
-                cutout: '70%',
+                cutout: '68%',
                 plugins: {
-                    legend: { position: 'bottom' }
+                    legend: { position: 'bottom', labels: { color: labelColor } }
                 }
             }
         });

@@ -3,44 +3,73 @@
 namespace App\Helpers;
 
 /**
- * Cibersegurança e LGPD (Item 5): Criptografia de Dados
+ * Cibersegurança e LGPD (Item 5): Criptografia Autenticada de Dados Sensíveis (PII)
  * 
- * Esta classe utiliza OpenSSL com AES-256-CBC para criptografar
- * e descriptografar dados sensíveis de usuários (ex: CPF, Telefone, Email)
- * garantindo a proteção e anonimização exigida pela LGPD.
- * 
- * Uso:
- * $criptografado = CryptHelper::encrypt("11999999999");
- * $original = CryptHelper::decrypt($criptografado);
+ * Utiliza OpenSSL com AES-256-GCM (criptografia autenticada AEAD) para proteger
+ * informações pessoalmente identificáveis (ex: Telefone, E-mail) em repouso no banco,
+ * garantindo confidencialidade e integridade conforme boas práticas da LGPD.
  */
 class CryptHelper {
     
-    // Na vida real, esta chave deve vir do .env (ex: $_ENV['APP_KEY'])
-    // e NUNCA ser exposta no código. Como exemplo de TCC, definimos aqui.
-    private static $key = 'lgpd-stockflow-secure-key-2026!';
-    private static $cipher = 'aes-256-cbc';
+    private static string $cipher = 'aes-256-gcm';
+    private static string $prefix = 'enc:v1:';
+
+    private static function getKey(): string {
+        $rawKey = $_ENV['APP_KEY'] ?? getenv('APP_KEY') ?: '';
+        if (empty($rawKey)) {
+            // Fallback determinístico por instalação caso APP_KEY não esteja definida no .env
+            $rawKey = 'stockflow-lgpd-default-key|' . __DIR__;
+        }
+        return hash('sha256', $rawKey, true);
+    }
     
     public static function encrypt($data) {
-        if (empty($data)) return $data;
+        if ($data === null || $data === '') {
+            return $data;
+        }
+        $data = (string)$data;
+        if (str_starts_with($data, self::$prefix)) {
+            return $data;
+        }
         
         $ivlen = openssl_cipher_iv_length(self::$cipher);
-        $iv = openssl_random_pseudo_bytes($ivlen);
+        $iv = random_bytes($ivlen);
+        $tag = '';
         
-        $encrypted = openssl_encrypt($data, self::$cipher, self::$key, 0, $iv);
+        $encrypted = openssl_encrypt($data, self::$cipher, self::getKey(), OPENSSL_RAW_DATA, $iv, $tag, '', 16);
+        if ($encrypted === false) {
+            return $data;
+        }
         
-        // Retornamos IV + Data encodados em Base64
-        return base64_encode($iv . $encrypted);
+        return self::$prefix . base64_encode($iv . $tag . $encrypted);
     }
     
     public static function decrypt($data) {
-        if (empty($data)) return $data;
+        if ($data === null || $data === '') {
+            return $data;
+        }
+        $data = (string)$data;
+        if (!str_starts_with($data, self::$prefix)) {
+            // Compatibilidade retroativa com registros antigos em texto plano
+            return $data;
+        }
         
-        $data = base64_decode($data);
+        $decoded = base64_decode(substr($data, strlen(self::$prefix)), true);
+        if ($decoded === false) {
+            return '';
+        }
+        
         $ivlen = openssl_cipher_iv_length(self::$cipher);
+        $taglen = 16;
+        if (strlen($decoded) < ($ivlen + $taglen)) {
+            return '';
+        }
         
-        $iv = substr($data, 0, $ivlen);
-        $encrypted = substr($data, $ivlen);
+        $iv = substr($decoded, 0, $ivlen);
+        $tag = substr($decoded, $ivlen, $taglen);
+        $ciphertext = substr($decoded, $ivlen + $taglen);
         
-        return openssl_decrypt($encrypted, self::$cipher, self::$key, 0, $iv);
+        $decrypted = openssl_decrypt($ciphertext, self::$cipher, self::getKey(), OPENSSL_RAW_DATA, $iv, $tag);
+        return $decrypted !== false ? $decrypted : '';
     }
 }

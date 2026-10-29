@@ -4,69 +4,78 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Database;
-use App\Models\Produto;
+use App\Helpers\AuditHelper;
+use App\Helpers\CryptHelper;
 use PDO;
 
 class VendaController extends Controller {
     
     public function index() {
-        if (!isset($_SESSION['usuario_id'])) {
-            $this->redirect('/');
-        }
-        
         $db = Database::getConnection();
         
-        // Buscar todas as categorias
         $stmtCat = $db->query("SELECT * FROM categorias ORDER BY nome_categoria");
         $categorias = $stmtCat->fetchAll(PDO::FETCH_ASSOC);
 
-        // Buscar todos os clientes
-        $stmtCli = $db->query("SELECT * FROM clientes ORDER BY nome");
+        $stmtCli = $db->query("SELECT * FROM clientes ORDER BY CASE WHEN id_cliente = 1 THEN 0 ELSE 1 END, nome ASC");
         $clientes = $stmtCli->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($clientes as &$cli) {
+            $cli['telefone'] = CryptHelper::decrypt($cli['telefone'] ?? '');
+        }
+        unset($cli);
 
-        // Buscar todos os produtos para a busca
-        $stmtProd = $db->query("SELECT id_produto, nome_produto, codigo_barras, preco_venda, quantidade_estoque FROM produtos WHERE quantidade_estoque > 0");
+        $stmtProd = $db->query("
+            SELECT id_produto, nome_produto, codigo_barras, id_categoria, preco_venda, quantidade_estoque 
+            FROM produtos 
+            WHERE quantidade_estoque > 0
+            ORDER BY nome_produto ASC
+        ");
         $produtos = $stmtProd->fetchAll(PDO::FETCH_ASSOC);
 
         $this->view('pdv/index', [
             'categorias' => $categorias,
             'clientes' => $clientes,
-            'produtos_json' => json_encode($produtos)
+            'produtos_json' => json_encode($produtos, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)
         ]);
     }
     
     public function finalizar() {
         header('Content-Type: application/json');
-        if (!isset($_SESSION['usuario_id'])) {
-            http_response_code(401);
-            echo json_encode(['success' => false, 'message' => 'Usuário não autenticado.']);
-            return;
-        }
 
         $json = file_get_contents('php://input');
         $data = json_decode($json, true);
         
-        if (!$data || !isset($data['carrinho']) || count($data['carrinho']) === 0) {
+        if (!$data || !isset($data['carrinho']) || !is_array($data['carrinho']) || count($data['carrinho']) === 0) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Carrinho vazio']);
+            echo json_encode(['success' => false, 'message' => 'Carrinho vazio.']);
             return;
         }
 
-        $input = $data;
+        $idCliente = (int)($data['id_cliente'] ?? 1);
+        $metodoPagamento = trim((string)($data['metodo_pagamento'] ?? 'Dinheiro'));
+        $desconto = round(floatval($data['desconto'] ?? 0), 2);
+        $valorDinheiroMisto = isset($data['valor_dinheiro']) ? round(floatval($data['valor_dinheiro']), 2) : null;
+        $carrinho = $data['carrinho'];
 
-        $idCliente = $input['id_cliente'] ?? 1; // 1 = Cliente Padrão
-        $metodoPagamento = $input['metodo_pagamento'] ?? 'Dinheiro';
-        $desconto = floatval($input['desconto'] ?? 0);
-        $carrinho = $input['carrinho'];
+        if ($desconto < 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'O desconto não pode ser negativo.']);
+            return;
+        }
+
+        if ($metodoPagamento === 'Fiado (Caderninho)' && $idCliente <= 1) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Selecione ou cadastre um cliente nominal para registrar venda no Fiado.']);
+            return;
+        }
 
         $db = Database::getConnection();
         
         try {
             $db->beginTransaction();
             
-            $idUsuario = $_SESSION['usuario_id'];
+            $idUsuario = (int)$_SESSION['usuario_id'];
+            $agora = date('Y-m-d H:i:s');
             
-            // Verificar Caixa Aberto
             $stmtCaixa = $db->prepare("SELECT id_caixa FROM caixas WHERE id_usuario = ? AND status = 'Aberto'");
             $stmtCaixa->execute([$idUsuario]);
             $caixa = $stmtCaixa->fetch(PDO::FETCH_ASSOC);
@@ -76,84 +85,123 @@ class VendaController extends Controller {
                 echo json_encode(['success' => false, 'message' => 'Você precisa abrir o caixa (Turno) antes de realizar vendas.']);
                 return;
             }
-            $idCaixa = $caixa['id_caixa'];
-            
-            $valorTotalBruto = 0;
-            foreach ($carrinho as $item) {
-                $valorTotalBruto += ($item['preco'] * $item['quantidade']);
-            }
-            $valorTotalLiquido = max(0, $valorTotalBruto - $desconto);
+            $idCaixa = (int)$caixa['id_caixa'];
 
-            // Inserir Venda
-            $stmtVenda = $db->prepare("INSERT INTO vendas (id_cliente, valor_total, desconto, metodo_pagamento) VALUES (?, ?, ?, ?)");
-            $stmtVenda->execute([$idCliente, $valorTotalLiquido, $desconto, $metodoPagamento]);
-            $idVenda = $db->lastInsertId();
-
-            // Processar Itens
-            $stmtItem = $db->prepare("INSERT INTO vendas_itens (id_venda, id_produto, quantidade, preco_unitario) VALUES (?, ?, ?, ?)");
-            $stmtUpdateEstoque = $db->prepare("UPDATE produtos SET quantidade_estoque = quantidade_estoque - ? WHERE id_produto = ?");
-            $stmtMovimentacao = $db->prepare("INSERT INTO movimentacoes_estoque (id_produto, id_usuario, tipo, quantidade, observacao) VALUES (?, ?, 'Saída', ?, ?)");
-
-            $stmtCheckEstoque = $db->prepare("SELECT nome_produto, quantidade_estoque FROM produtos WHERE id_produto = ?");
-
-            $idUsuario = $_SESSION['usuario_id'];
+            // Consolida quantidades por produto e busca preço real no servidor (anti-tampering)
+            $stmtCheckEstoque = $db->prepare("SELECT id_produto, nome_produto, preco_venda, quantidade_estoque FROM produtos WHERE id_produto = ?");
+            $itensValidados = [];
+            $valorTotalBruto = 0.0;
 
             foreach ($carrinho as $item) {
-                $stmtCheckEstoque->execute([$item['id']]);
-                $prodData = $stmtCheckEstoque->fetch(PDO::FETCH_ASSOC);
-                if ($prodData && $prodData['quantidade_estoque'] < $item['quantidade']) {
-                    throw new \Exception("Estoque insuficiente para vender '{$prodData['nome_produto']}'. (Atual: {$prodData['quantidade_estoque']})");
+                $idProd = (int)($item['id'] ?? 0);
+                $qtd = round(floatval($item['quantidade'] ?? 0), 3);
+
+                if ($idProd <= 0 || $qtd <= 0) {
+                    throw new \Exception("Quantidade inválida informada no carrinho.");
                 }
 
-                $stmtItem->execute([$idVenda, $item['id'], $item['quantidade'], $item['preco']]);
-                $stmtUpdateEstoque->execute([$item['quantidade'], $item['id']]);
-                
-                // Registrar Kardex
-                $obs = "Venda PDV #" . str_pad($idVenda, 4, '0', STR_PAD_LEFT);
-                $stmtMovimentacao->execute([$item['id'], $idUsuario, $item['quantidade'], $obs]);
+                if (!isset($itensValidados[$idProd])) {
+                    $stmtCheckEstoque->execute([$idProd]);
+                    $prodData = $stmtCheckEstoque->fetch(PDO::FETCH_ASSOC);
+                    if (!$prodData) {
+                        throw new \Exception("Produto #{$idProd} não encontrado no sistema.");
+                    }
+                    $itensValidados[$idProd] = [
+                        'id' => (int)$prodData['id_produto'],
+                        'nome' => $prodData['nome_produto'],
+                        'preco' => round((float)$prodData['preco_venda'], 2),
+                        'estoque_disponivel' => (float)$prodData['quantidade_estoque'],
+                        'quantidade' => 0.0
+                    ];
+                }
+
+                $itensValidados[$idProd]['quantidade'] = round($itensValidados[$idProd]['quantidade'] + $qtd, 3);
+                if ($itensValidados[$idProd]['quantidade'] > $itensValidados[$idProd]['estoque_disponivel']) {
+                    $disp = rtrim(rtrim(number_format($itensValidados[$idProd]['estoque_disponivel'], 3, ',', '.'), '0'), ',');
+                    throw new \Exception("Estoque insuficiente para '{$itensValidados[$idProd]['nome']}'. (Disponível: {$disp})");
+                }
             }
 
-            // Caixa: Se não for fiado, entra o dinheiro
-            if ($metodoPagamento !== 'Fiado (Caderninho)') {
-                $stmtMovCaixa = $db->prepare("INSERT INTO caixa_movimentacoes (id_caixa, tipo, valor, descricao) VALUES (?, 'Venda', ?, ?)");
-                $stmtMovCaixa->execute([$idCaixa, $valorTotalLiquido, "Venda #$idVenda - $metodoPagamento"]);
+            foreach ($itensValidados as $iv) {
+                $valorTotalBruto += ($iv['preco'] * $iv['quantidade']);
+            }
+            $valorTotalBruto = round($valorTotalBruto, 2);
+            $descontoAplicado = min($desconto, $valorTotalBruto);
+            $valorTotalLiquido = round(max(0, $valorTotalBruto - $descontoAplicado), 2);
+
+            // Inserir Venda
+            $stmtVenda = $db->prepare("INSERT INTO vendas (id_cliente, valor_total, desconto, metodo_pagamento, status, data_venda) VALUES (?, ?, ?, ?, 'Concluída', ?)");
+            $stmtVenda->execute([$idCliente, $valorTotalLiquido, $descontoAplicado, $metodoPagamento, $agora]);
+            $idVenda = (int)$db->lastInsertId();
+
+            // Processar Itens e Baixar Estoque
+            $stmtItem = $db->prepare("INSERT INTO vendas_itens (id_venda, id_produto, quantidade, preco_unitario) VALUES (?, ?, ?, ?)");
+            $stmtUpdateEstoque = $db->prepare("UPDATE produtos SET quantidade_estoque = ROUND(quantidade_estoque - ?, 3) WHERE id_produto = ?");
+            $stmtMovimentacao = $db->prepare("INSERT INTO movimentacoes_estoque (id_produto, id_usuario, tipo, quantidade, observacao, data_movimentacao) VALUES (?, ?, 'Saída', ?, ?, ?)");
+
+            foreach ($itensValidados as $iv) {
+                $stmtItem->execute([$idVenda, $iv['id'], $iv['quantidade'], $iv['preco']]);
+                $stmtUpdateEstoque->execute([$iv['quantidade'], $iv['id']]);
+                
+                $obs = "Venda PDV #" . str_pad((string)$idVenda, 4, '0', STR_PAD_LEFT);
+                $stmtMovimentacao->execute([$iv['id'], $idUsuario, $iv['quantidade'], $obs, $agora]);
+            }
+
+            // Movimentação Financeira
+            if ($metodoPagamento === 'Fiado (Caderninho)') {
+                $vencimento = date('Y-m-d', strtotime('+30 days'));
+                $stmtFiado = $db->prepare("INSERT INTO contas_receber (id_venda, id_cliente, valor_total, status, data_vencimento, criado_em) VALUES (?, ?, ?, 'Pendente', ?, ?)");
+                $stmtFiado->execute([$idVenda, $idCliente, $valorTotalLiquido, $vencimento, $agora]);
+            } elseif (str_starts_with($metodoPagamento, 'Misto') && $valorDinheiroMisto !== null) {
+                $dinheiroLiquido = min($valorTotalLiquido, max(0, $valorDinheiroMisto));
+                $eletronicoLiquido = round($valorTotalLiquido - $dinheiroLiquido, 2);
+                $stmtMovCaixa = $db->prepare("INSERT INTO caixa_movimentacoes (id_caixa, tipo, valor, metodo_pagamento, descricao, data_movimentacao) VALUES (?, 'Venda', ?, ?, ?, ?)");
+                if ($dinheiroLiquido > 0) {
+                    $stmtMovCaixa->execute([$idCaixa, $dinheiroLiquido, 'Dinheiro', "Venda #{$idVenda} (Parte em Dinheiro)", $agora]);
+                }
+                if ($eletronicoLiquido > 0) {
+                    $stmtMovCaixa->execute([$idCaixa, $eletronicoLiquido, 'Cartão/Pix', "Venda #{$idVenda} (Parte Eletrônica)", $agora]);
+                }
             } else {
-                // Registrar Conta a Receber
-                $stmtFiado = $db->prepare("INSERT INTO contas_receber (id_venda, id_cliente, valor_total) VALUES (?, ?, ?)");
-                $stmtFiado->execute([$idVenda, $idCliente, $valorTotalLiquido]);
+                $metodoCaixa = ($metodoPagamento === 'Dinheiro') ? 'Dinheiro' : $metodoPagamento;
+                $stmtMovCaixa = $db->prepare("INSERT INTO caixa_movimentacoes (id_caixa, tipo, valor, metodo_pagamento, descricao, data_movimentacao) VALUES (?, 'Venda', ?, ?, ?, ?)");
+                $stmtMovCaixa->execute([$idCaixa, $valorTotalLiquido, $metodoCaixa, "Venda #{$idVenda} - {$metodoPagamento}", $agora]);
             }
             
             $db->commit();
             
             echo json_encode(['success' => true, 'id_venda' => $idVenda, 'total' => $valorTotalLiquido]);
         } catch (\Exception $e) {
-            $db->rollBack();
+            if ($db->inTransaction()) $db->rollBack();
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
     }
     
     public function recibo($id) {
-        if (!isset($_SESSION['usuario_id'])) {
-            $this->redirect('/');
-        }
-        
         $db = Database::getConnection();
         
-        // Na nossa tabela vendas NÃO tem id_usuario, então ajustamos a query
-        $stmtVenda = $db->prepare("SELECT v.*, c.nome as cliente_nome 
+        $stmtVenda = $db->prepare("
+            SELECT v.*, c.nome as cliente_nome, c.telefone as cliente_telefone
             FROM vendas v 
             LEFT JOIN clientes c ON v.id_cliente = c.id_cliente
-            WHERE v.id_venda = ?");
-        $stmtVenda->execute([$id]);
+            WHERE v.id_venda = ?
+        ");
+        $stmtVenda->execute([(int)$id]);
         $venda = $stmtVenda->fetch(PDO::FETCH_ASSOC);
         
-        if (!$venda) die("Venda não encontrada");
+        if (!$venda) {
+            http_response_code(404);
+            die("Venda não encontrada.");
+        }
+        $venda['cliente_telefone'] = CryptHelper::decrypt($venda['cliente_telefone'] ?? '');
         
-        $stmtItens = $db->prepare("SELECT vi.*, p.nome_produto, p.codigo_barras 
+        $stmtItens = $db->prepare("
+            SELECT vi.*, p.nome_produto, p.codigo_barras 
             FROM vendas_itens vi 
             JOIN produtos p ON vi.id_produto = p.id_produto 
-            WHERE vi.id_venda = ?");
-        $stmtItens->execute([$id]);
+            WHERE vi.id_venda = ?
+        ");
+        $stmtItens->execute([(int)$id]);
         $itens = $stmtItens->fetchAll(PDO::FETCH_ASSOC);
         
         $this->view('pdv/recibo', ['venda' => $venda, 'itens' => $itens]);

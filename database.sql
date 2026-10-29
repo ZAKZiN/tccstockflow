@@ -1,10 +1,7 @@
--- Script SQL para o Sistema StockFlow adaptado para PostgreSQL (Supabase / Neon)
--- Atualizado para conter TODAS as tabelas do sistema comercial PDV
+-- Script SQL para o Sistema StockFlow (SQLite 3)
+-- Estrutura completa de Gestão de Estoque, Requisições, Compras, Caixa e PDV
 
--- =========================================================================
--- ATENÇÃO: Os comandos abaixo irão APAGAR todas as tabelas existentes
--- para garantir que o banco seja recriado limpo e com as colunas corretas.
--- =========================================================================
+DROP TABLE IF EXISTS login_attempts;
 DROP TABLE IF EXISTS audit_logs;
 DROP TABLE IF EXISTS notificacoes;
 DROP TABLE IF EXISTS compras;
@@ -22,32 +19,39 @@ DROP TABLE IF EXISTS categorias;
 DROP TABLE IF EXISTS clientes;
 DROP TABLE IF EXISTS usuarios;
 DROP TABLE IF EXISTS setores;
--- =========================================================================
--- A tabela de Setores
+
+-- Tabela de Setores
 CREATE TABLE IF NOT EXISTS setores (
     id_setor INTEGER PRIMARY KEY AUTOINCREMENT,
     nome_setor VARCHAR(80) NOT NULL UNIQUE
 );
 
--- Tabela de Usuarios
+-- Tabela de Usuários
 CREATE TABLE IF NOT EXISTS usuarios (
     id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
     nome VARCHAR(120) NOT NULL,
     login VARCHAR(60) NOT NULL UNIQUE,
-    senha VARCHAR(255),
-    google_id VARCHAR(255) UNIQUE,
+    senha VARCHAR(255) NOT NULL,
     nivel_acesso VARCHAR(50) NOT NULL,
     id_setor INT,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_setor) REFERENCES setores(id_setor) ON DELETE SET NULL
 );
 
+-- Tabela de Controle de Tentativas de Login (Rate Limiting Persistente)
+CREATE TABLE IF NOT EXISTS login_attempts (
+    id_attempt INTEGER PRIMARY KEY AUTOINCREMENT,
+    ip_address VARCHAR(45) NOT NULL,
+    login VARCHAR(60) NOT NULL,
+    tentado_em INTEGER NOT NULL
+);
+
 -- Tabela de Clientes
 CREATE TABLE IF NOT EXISTS clientes (
     id_cliente INTEGER PRIMARY KEY AUTOINCREMENT,
     nome VARCHAR(120) NOT NULL,
-    telefone VARCHAR(20),
-    email VARCHAR(120),
+    telefone VARCHAR(255),
+    email VARCHAR(255),
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -57,7 +61,7 @@ CREATE TABLE IF NOT EXISTS categorias (
     nome_categoria VARCHAR(80) NOT NULL UNIQUE
 );
 
--- Tabela de Produtos (Completa)
+-- Tabela de Produtos
 CREATE TABLE IF NOT EXISTS produtos (
     id_produto INTEGER PRIMARY KEY AUTOINCREMENT,
     nome_produto VARCHAR(160) NOT NULL,
@@ -66,8 +70,8 @@ CREATE TABLE IF NOT EXISTS produtos (
     id_categoria INT,
     preco_custo DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     preco_venda DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-    quantidade_estoque INT NOT NULL DEFAULT 0,
-    estoque_minimo INT NOT NULL DEFAULT 5,
+    quantidade_estoque DECIMAL(10,3) NOT NULL DEFAULT 0,
+    estoque_minimo DECIMAL(10,3) NOT NULL DEFAULT 5,
     lote VARCHAR(50),
     data_validade DATE,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -80,7 +84,7 @@ CREATE TABLE IF NOT EXISTS vendas (
     id_cliente INT,
     valor_total DECIMAL(10,2) NOT NULL,
     desconto DECIMAL(10,2) DEFAULT 0.00,
-    metodo_pagamento VARCHAR(50) NOT NULL,
+    metodo_pagamento VARCHAR(80) NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'Concluída',
     data_venda TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE SET NULL
@@ -91,7 +95,7 @@ CREATE TABLE IF NOT EXISTS vendas_itens (
     id_venda_item INTEGER PRIMARY KEY AUTOINCREMENT,
     id_venda INT NOT NULL,
     id_produto INT NOT NULL,
-    quantidade INT NOT NULL,
+    quantidade DECIMAL(10,3) NOT NULL,
     preco_unitario DECIMAL(10,2) NOT NULL,
     FOREIGN KEY (id_venda) REFERENCES vendas(id_venda) ON DELETE CASCADE,
     FOREIGN KEY (id_produto) REFERENCES produtos(id_produto) ON DELETE CASCADE
@@ -123,37 +127,38 @@ CREATE TABLE IF NOT EXISTS caixas (
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
 );
 
--- Tabela de Movimentacoes do Caixa
+-- Tabela de Movimentações do Caixa
 CREATE TABLE IF NOT EXISTS caixa_movimentacoes (
     id_movimentacao INTEGER PRIMARY KEY AUTOINCREMENT,
     id_caixa INT NOT NULL,
     tipo VARCHAR(50) NOT NULL,
     valor DECIMAL(10,2) NOT NULL,
+    metodo_pagamento VARCHAR(50) DEFAULT 'Dinheiro',
     descricao TEXT,
     data_movimentacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_caixa) REFERENCES caixas(id_caixa) ON DELETE CASCADE
 );
 
--- Tabela de Movimentacoes de Estoque (Kardex)
+-- Tabela de Movimentações de Estoque (Kardex)
 CREATE TABLE IF NOT EXISTS movimentacoes_estoque (
     id_movimentacao INTEGER PRIMARY KEY AUTOINCREMENT,
     id_produto INT NOT NULL,
     id_usuario INT,
     tipo VARCHAR(50) NOT NULL,
-    quantidade INT NOT NULL,
+    quantidade DECIMAL(10,3) NOT NULL,
     observacao TEXT,
     data_movimentacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_produto) REFERENCES produtos(id_produto) ON DELETE CASCADE,
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE SET NULL
 );
 
--- Tabela de Requisicoes (Antiga / Interna)
+-- Tabela de Requisições Internas
 CREATE TABLE IF NOT EXISTS requisicoes (
     id_requisicao INTEGER PRIMARY KEY AUTOINCREMENT,
     solicitante VARCHAR(120) NOT NULL,
     id_setor INT,
     material VARCHAR(160) NOT NULL,
-    quantidade INT NOT NULL,
+    quantidade DECIMAL(10,3) NOT NULL,
     prioridade VARCHAR(50) NOT NULL DEFAULT 'Média',
     justificativa TEXT,
     status VARCHAR(50) NOT NULL DEFAULT 'Pendente Coordenador',
@@ -162,7 +167,7 @@ CREATE TABLE IF NOT EXISTS requisicoes (
     FOREIGN KEY (id_setor) REFERENCES setores(id_setor) ON DELETE SET NULL
 );
 
--- Tabela de Historico de Requisicoes
+-- Tabela de Histórico de Requisições
 CREATE TABLE IF NOT EXISTS historico_requisicoes (
     id_historico INTEGER PRIMARY KEY AUTOINCREMENT,
     id_requisicao INT NOT NULL,
@@ -177,8 +182,8 @@ CREATE TABLE IF NOT EXISTS fornecedores (
     id_fornecedor INTEGER PRIMARY KEY AUTOINCREMENT,
     nome_fantasia VARCHAR(160) NOT NULL,
     cnpj VARCHAR(20) UNIQUE,
-    email VARCHAR(120),
-    telefone VARCHAR(20),
+    email VARCHAR(255),
+    telefone VARCHAR(255),
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -192,7 +197,7 @@ CREATE TABLE IF NOT EXISTS compras (
     FOREIGN KEY (id_requisicao) REFERENCES requisicoes(id_requisicao) ON DELETE CASCADE
 );
 
--- Tabela de Notificacoes In-App
+-- Tabela de Notificações In-App
 CREATE TABLE IF NOT EXISTS notificacoes (
     id_notificacao INTEGER PRIMARY KEY AUTOINCREMENT,
     id_usuario INT,
@@ -210,26 +215,24 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     id_registro INT NOT NULL,
     acao VARCHAR(50) NOT NULL,
     detalhes TEXT,
+    id_usuario INT NULL,
+    usuario_nome VARCHAR(120) NULL,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Função e Trigger para atualizar o campo "atualizado_em" automaticamente
-
-
-
--- Triggers SQLite para atualizacao de data
+-- Triggers SQLite para atualização de timestamp e auditoria automática de estoque
 CREATE TRIGGER IF NOT EXISTS update_produtos_modtime
 AFTER UPDATE ON produtos
 FOR EACH ROW
 BEGIN
-    UPDATE produtos SET atualizado_em = CURRENT_TIMESTAMP WHERE id_produto = NEW.id_produto;
+    UPDATE produtos SET atualizado_em = datetime('now', 'localtime') WHERE id_produto = NEW.id_produto;
 END;
 
 CREATE TRIGGER IF NOT EXISTS update_requisicoes_modtime
 AFTER UPDATE ON requisicoes
 FOR EACH ROW
 BEGIN
-    UPDATE requisicoes SET atualizado_em = CURRENT_TIMESTAMP WHERE id_requisicao = NEW.id_requisicao;
+    UPDATE requisicoes SET atualizado_em = datetime('now', 'localtime') WHERE id_requisicao = NEW.id_requisicao;
 END;
 
 CREATE TRIGGER IF NOT EXISTS trigger_audit_produtos
@@ -237,21 +240,25 @@ AFTER UPDATE ON produtos
 FOR EACH ROW
 WHEN NEW.quantidade_estoque <> OLD.quantidade_estoque
 BEGIN
-    INSERT INTO audit_logs (tabela_afetada, id_registro, acao, detalhes)
-    VALUES ('produtos', NEW.id_produto, 'UPDATE_ESTOQUE', 
-            'Estoque alterado de ' || OLD.quantidade_estoque || ' para ' || NEW.quantidade_estoque);
+    INSERT INTO audit_logs (tabela_afetada, id_registro, acao, detalhes, criado_em)
+    VALUES ('produtos', NEW.id_produto, 'UPDATE_ESTOQUE',
+            'Produto "' || NEW.nome_produto || '": estoque alterado de ' || OLD.quantidade_estoque || ' para ' || NEW.quantidade_estoque,
+            datetime('now', 'localtime'));
 END;
-INSERT INTO setores (nome_setor) VALUES ('Administrativo'), ('Caixa'), ('Estoque') ON CONFLICT DO NOTHING;
+
+-- Dados Iniciais (Seeds)
+INSERT INTO setores (nome_setor) VALUES ('Administrativo'), ('Caixa'), ('Estoque'), ('Operacional') ON CONFLICT DO NOTHING;
 
 -- Hash de 'admin123' gerado via BCRYPT
-INSERT INTO usuarios (nome, login, senha, nivel_acesso, id_setor) 
+INSERT INTO usuarios (nome, login, senha, nivel_acesso, id_setor)
 VALUES ('Administrador Master', 'admin', '$2y$12$.HfR4mloLrGDIO8RP4tcvu1f16ZOxa1XBvgAs6eJm80WQTq0Mxjna', 'Administrador', 1) ON CONFLICT DO NOTHING;
 
--- Inserindo Dados Iniciais Secundarios
-INSERT INTO categorias (nome_categoria) VALUES ('Bebidas'), ('Mercearia'), ('Higiene') ON CONFLICT DO NOTHING;
-INSERT INTO clientes (nome, telefone) VALUES ('Cliente Padrão (Balcão)', '') ON CONFLICT DO NOTHING;
+INSERT INTO categorias (nome_categoria) VALUES ('Bebidas'), ('Mercearia'), ('Higiene'), ('Hortifruti / Padaria'), ('Papelaria / Escritório') ON CONFLICT DO NOTHING;
 
--- Otimização: Índices Estruturais (SaaS Ready)
+INSERT INTO clientes (id_cliente, nome, telefone) VALUES (1, 'Cliente Padrão (Balcão)', '') ON CONFLICT(id_cliente) DO NOTHING;
+
+-- Índices Estruturais
+CREATE INDEX IF NOT EXISTS idx_login_attempts_ip_login ON login_attempts(ip_address, login);
 CREATE INDEX IF NOT EXISTS idx_produtos_codigo_barras ON produtos(codigo_barras);
 CREATE INDEX IF NOT EXISTS idx_produtos_categoria ON produtos(id_categoria);
 CREATE INDEX IF NOT EXISTS idx_vendas_data ON vendas(data_venda);

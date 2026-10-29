@@ -4,9 +4,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- LGPD: Banner de Cookies -->
-    <div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--surface); border-top: 1px solid var(--border); padding: 1rem 2rem; z-index: 9999; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); justify-content: space-between; align-items: center; gap: 1rem;">
-        <div style="flex: 1; color: var(--text-secondary); font-size: 0.9rem;">
-            <strong style="color: var(--text-primary);"><i class="ph ph-shield-check"></i> Política de Privacidade e LGPD:</strong> Nós utilizamos cookies essenciais (como token de sessão e CSRF) estritamente necessários para o funcionamento seguro do sistema. Nenhum dado de clientes é compartilhado com terceiros.
+    <div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--surface); border-top: 1px solid var(--border-subtle); padding: 1rem 2rem; z-index: 9999; box-shadow: 0 -4px 15px rgba(0,0,0,0.12); justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 240px; color: var(--text-secondary); font-size: 0.9rem;">
+            <strong style="color: var(--text-primary);"><i class="ph ph-shield-check"></i> Política de Privacidade e LGPD:</strong> Utilizamos cookies estritamente essenciais (sessão autenticada e proteção CSRF) e criptografia AES-256-GCM para proteger dados pessoais em repouso.
         </div>
         <button id="aceitarCookies" class="btn btn-primary" style="white-space: nowrap;">Entendido</button>
     </div>
@@ -24,6 +24,7 @@
             
             // Prevenção Global de Duplo Clique (Double Submit)
             document.querySelectorAll('form').forEach(form => {
+                if (form.hasAttribute('data-no-spinner')) return;
                 form.addEventListener('submit', function() {
                     const btns = this.querySelectorAll('button[type="submit"]');
                     btns.forEach(btn => {
@@ -31,11 +32,10 @@
                             btn.disabled = true;
                             const originalText = btn.innerHTML;
                             btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Aguarde...';
-                            // Restaura caso a página não recarregue (ex: erro de validação nativa)
                             setTimeout(() => {
                                 btn.disabled = false;
                                 btn.innerHTML = originalText;
-                            }, 4000);
+                            }, 5000);
                         }
                     });
                 });

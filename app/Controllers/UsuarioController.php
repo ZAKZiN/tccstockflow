@@ -2,76 +2,107 @@
 
 namespace App\Controllers;
 
+use App\Core\Controller;
 use App\Core\Database;
+use App\Helpers\AuditHelper;
 use PDO;
 
-class UsuarioController {
+class UsuarioController extends Controller {
     
+    private const ALLOWED_ROLES = [
+        'Operador de Caixa',
+        'Estoquista',
+        'Solicitante',
+        'Coordenador',
+        'Gerente',
+        'Administrador'
+    ];
+
     public function index() {
         $db = Database::getConnection();
-        $stmt = $db->query("SELECT id_usuario, nome, login, nivel_acesso, criado_em FROM usuarios ORDER BY nome ASC");
+        $stmt = $db->query("
+            SELECT u.id_usuario, u.nome, u.login, u.nivel_acesso, u.id_setor, u.criado_em, s.nome_setor 
+            FROM usuarios u
+            LEFT JOIN setores s ON u.id_setor = s.id_setor
+            ORDER BY u.nome ASC
+        ");
         $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $setores = $db->query("SELECT * FROM setores ORDER BY nome_setor ASC")->fetchAll(PDO::FETCH_ASSOC);
         
-        $error = $_GET['error'] ?? null;
-        $success = $_GET['success'] ?? null;
-        
-        require __DIR__ . '/../Views/usuarios/index.php';
+        $this->view('usuarios/index', [
+            'usuarios' => $usuarios,
+            'setores' => $setores,
+            'error' => $_GET['error'] ?? null,
+            'success' => $_GET['success'] ?? null
+        ]);
     }
     
     public function store() {
-        $nome = $_POST['nome_usuario'] ?? '';
-        $login = $_POST['login'] ?? '';
+        $nome = trim($_POST['nome_usuario'] ?? '');
+        $login = trim($_POST['login'] ?? '');
         $senha = $_POST['senha'] ?? '';
-        $nivel = $_POST['nivel_acesso'] ?? 'Estoquista';
+        $nivel = $_POST['nivel_acesso'] ?? '';
+        $idSetor = !empty($_POST['id_setor']) ? (int)$_POST['id_setor'] : null;
         
-        if (empty($nome) || empty($login) || empty($senha)) {
-            header('Location: /usuarios?error=' . urlencode('Preencha todos os campos obrigatórios.'));
-            exit;
+        if ($nome === '' || $login === '' || $senha === '') {
+            $this->redirect('/usuarios?error=' . urlencode('Preencha todos os campos obrigatórios.'));
+        }
+
+        if (!in_array($nivel, self::ALLOWED_ROLES, true)) {
+            $this->redirect('/usuarios?error=' . urlencode('Cargo selecionado inválido.'));
         }
 
         // Cibersegurança: Política de Senha Forte
         if (strlen($senha) < 8 || !preg_match('/[A-Za-z]/', $senha) || !preg_match('/[0-9]/', $senha)) {
-            header('Location: /usuarios?error=' . urlencode('A senha deve ter no mínimo 8 caracteres, incluindo letras e números.'));
-            exit;
+            $this->redirect('/usuarios?error=' . urlencode('A senha deve ter no mínimo 8 caracteres, incluindo letras e números.'));
         }
         
         $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
-        
         $db = Database::getConnection();
         
-        // Verifica se login já existe
         $stmtCheck = $db->prepare("SELECT id_usuario FROM usuarios WHERE login = ?");
         $stmtCheck->execute([$login]);
         if ($stmtCheck->fetch()) {
-            header('Location: /usuarios?error=Nome de usuário (login) já está em uso.');
-            exit;
+            $this->redirect('/usuarios?error=' . urlencode('Nome de usuário (login) já está em uso.'));
         }
         
         try {
-            $stmt = $db->prepare("INSERT INTO usuarios (nome, login, senha, nivel_acesso) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$nome, $login, $senhaHash, $nivel]);
-            header('Location: /usuarios?success=Usuário cadastrado com sucesso!');
-        } catch (\PDOException $e) {
-            header('Location: /usuarios?error=' . urlencode('Erro no banco: ' . $e->getMessage()));
+            $stmt = $db->prepare("INSERT INTO usuarios (nome, login, senha, nivel_acesso, id_setor, criado_em) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$nome, $login, $senhaHash, $nivel, $idSetor, date('Y-m-d H:i:s')]);
+            $novoId = (int)$db->lastInsertId();
+
+            AuditHelper::log('usuarios', $novoId, 'CRIAR_USUARIO', "Usuário '{$login}' ({$nivel}) cadastrado");
+            $this->redirect('/usuarios?success=' . urlencode('Usuário cadastrado com sucesso!'));
         } catch (\Exception $e) {
-            header('Location: /usuarios?error=' . urlencode('Erro ao cadastrar usuário: ' . $e->getMessage()));
+            error_log('Erro ao cadastrar usuário: ' . $e->getMessage());
+            $this->redirect('/usuarios?error=' . urlencode('Não foi possível cadastrar o usuário.'));
         }
-        exit;
     }
     
     public function destroy() {
-        $id = $_POST['id_usuario'] ?? 0;
+        $id = (int)($_POST['id_usuario'] ?? 0);
         
-        if ($id == $_SESSION['usuario_id']) {
-            header('Location: /usuarios?error=Você não pode excluir a sua própria conta.');
-            exit;
+        if ($id <= 0) {
+            $this->redirect('/usuarios?error=' . urlencode('Usuário inválido.'));
+        }
+
+        if ($id === (int)$_SESSION['usuario_id']) {
+            $this->redirect('/usuarios?error=' . urlencode('Você não pode excluir a sua própria conta.'));
         }
         
         $db = Database::getConnection();
+        $stmtInfo = $db->prepare("SELECT login, nivel_acesso FROM usuarios WHERE id_usuario = ?");
+        $stmtInfo->execute([$id]);
+        $alvo = $stmtInfo->fetch(PDO::FETCH_ASSOC);
+
         $stmt = $db->prepare("DELETE FROM usuarios WHERE id_usuario = ?");
         $stmt->execute([$id]);
         
-        header('Location: /usuarios?success=Usuário excluído com sucesso!');
-        exit;
+        if ($alvo) {
+            AuditHelper::log('usuarios', $id, 'EXCLUIR_USUARIO', "Usuário '{$alvo['login']}' ({$alvo['nivel_acesso']}) removido");
+        }
+
+        $this->redirect('/usuarios?success=' . urlencode('Usuário excluído com sucesso!'));
     }
 }

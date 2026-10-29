@@ -1,45 +1,48 @@
-# StockFlow - Gestão Comercial e de Estoque
+# StockFlow — Gestão Integrada de Estoque, Requisições e Frente de Caixa (PDV)
 
-StockFlow é um sistema completo de gestão de estoque, controle de requisições, e frente de caixa (PDV) desenvolvido em PHP moderno.
+**StockFlow** é um sistema web completo de gestão de estoque, fluxo de requisições internas, ordens de compra e frente de caixa (PDV), desenvolvido em **PHP 8+** seguindo arquitetura **MVC** como Trabalho de Conclusão de Curso (TCC).
 
 ## Funcionalidades Principais
 
-- **Frente de Caixa (PDV):** Interface moderna e responsiva para lançamento rápido de vendas, suporte a códigos de barra (via teclado ou leitor ótico) e integração nativa com o módulo de estoque.
-- **Gestão de Estoque:** Controle rígido de produtos com log de movimentações (Kardex), suporte a inventário e baixa automática nas vendas.
-- **Requisições de Compra:** Fluxo de aprovação de materiais, onde setores solicitam e administradores aprovam e vinculam a ordens de compra de fornecedores.
-- **Controle Financeiro e de Caixa:** Abertura e fechamento de turnos diários (Caixa), registro de sangrias e suprimentos, além de módulo de gestão de clientes "Fiado" (Contas a Receber).
-- **Controle de Acessos (RBAC):** Níveis de acesso bem definidos (Administrador, Gerente, Operador de Caixa, Estoquista) garantindo que cada usuário visualize apenas as ferramentas de seu cargo.
+- **Frente de Caixa (PDV):** Lançamento rápido de vendas com filtro por categoria, leitura de código de barras (leitor óptico, câmera ou etiquetas de balança EAN-13), cálculo de descontos/troco, formas múltiplas de pagamento (Dinheiro, Pix, Cartão, Misto e Fiado) e emissão de cupom não fiscal em 80mm / PDF / WhatsApp.
+- **Controle Financeiro de Caixa (Turnos):** Abertura e fechamento de caixa com separação entre **Saldo Físico na Gaveta (Dinheiro)** e **Recebimentos Eletrônicos (Pix/Cartão)**, sangrias com trava de saldo físico, suprimentos e emissão de **Relatório Z**.
+- **Gestão de Estoque e BI (Curva ABC):** Controle completo de produtos, categorias, lotes, alertas preventivos de validade e estoque crítico, rastreabilidade integral de entradas/saídas via **Kardex** e análise gerencial **Curva ABC (Pareto)**.
+- **Fluxo de Requisições e Ordens de Compra:** Solicitações por setor com aprovação da coordenação, geração de Ordens de Compra vinculadas a fornecedores (com entrada automática no estoque/Kardex) e despacho controlado aos setores.
+- **Fiado / Contas a Receber:** Cadastro rápido de clientes, controle de títulos pendentes, cobrança integrada via WhatsApp e integração direta da baixa com o turno de caixa aberto.
+- **Controle de Acesso por Cargos (RBAC):** Seis perfis distintos (`Administrador`, `Gerente`, `Operador de Caixa`, `Estoquista`, `Coordenador` e `Solicitante`) com redirecionamento inteligente e isolamento de rotas e ações.
 
-## Segurança e LGPD
+## Segurança da Informação e Conformidade LGPD
 
-Este projeto foi construído seguindo rigorosos padrões de segurança da informação, protegendo os dados de acordo com os princípios da **Lei Geral de Proteção de Dados (LGPD)** e cobrindo diversas vulnerabilidades do padrão OWASP:
+O projeto implementa controles defensivos alinhados ao **OWASP Top 10** e à **LGPD**:
 
-- **Prevenção contra Injeção SQL:** Toda a comunicação com o banco de dados é intermediada pelo `PDO` utilizando *Prepared Statements*.
-- **Proteção contra Cross-Site Scripting (XSS):** Implementação ativa de cabeçalhos de segurança (`Content-Security-Policy`, `X-XSS-Protection`) impedindo a execução de códigos maliciosos vindos de clientes infectados.
-- **Proteção Anti-CSRF e Anti-Bot (Honeypot):** Autenticação segura de formulários via tokens CSRF e inclusão de campos invisíveis (*honeypots*) para bloqueio instantâneo e silencioso de *brute-forces* e scripts automatizados na tela de login.
-- **Rate Limiting:** Bloqueio temporário progressivo para contenção de ataques de força bruta no endpoint de autenticação.
-- **Criptografia Simétrica Avançada:** Infraestrutura pronta baseada em `OpenSSL AES-256-CBC` (Padrão de indústria) projetada para a anonimização e mascaramento de Informações Pessoalmente Identificáveis (PIIs) de clientes.
-- **Sessões e Cookies Blindados:** Emissão de cookies puramente Server-Side, demarcados como `Secure` e `HttpOnly`, tornando o sequestro de sessões viabilizado por scripts de clientes impossível.
-- **Row Level Security (RLS) Database:** Políticas restritas instaladas diretamente na infraestrutura em Nuvem (Supabase / PostgreSQL) garantindo que tentativas externas (APIs públicas) sejam rigorosamente negadas.
+- **Prevenção contra SQL Injection:** Uso estrito de `PDO` com *Prepared Statements* em todas as operações de banco.
+- **Criptografia Autenticada de Dados Pessoais (LGPD):** Telefones e e-mails de clientes e fornecedores são criptografados em repouso no banco de dados via `OpenSSL AES-256-GCM` ([`CryptHelper.php`](app/Helpers/CryptHelper.php)).
+- **Proteção Anti-CSRF Global:** Validação criptográfica constante (`hash_equals`) em **todas** as rotas `POST` e endpoints JSON (`X-CSRF-Token`), sem ações de escrita via `GET`.
+- **Prevenção contra XSS e Clickjacking:** Sanitização de saídas no servidor (`htmlspecialchars`) e no DOM (`textContent`), aliada aos cabeçalhos `Content-Security-Policy`, `X-Frame-Options: SAMEORIGIN` e `X-Content-Type-Options: nosniff`.
+- **Proteção de Sessão e Autenticação:** Cookies `HttpOnly`, `SameSite=Lax` e `Secure`, regeneração de ID de sessão pós-login (`session_regenerate_id`), senhas com hash `bcrypt`, campo *Honeypot* anti-bot e *Rate Limiting* persistente por IP contra força bruta.
+- **Prevenção contra CSV Formula Injection:** Sanitização de células exportadas nos relatórios CSV de Estoque e Requisições.
+- **Trilha de Auditoria (`audit_logs`):** Registro automático via *Triggers* SQLite e logs de aplicação identificando o usuário autor em ações críticas.
 
 ## Tecnologias Utilizadas
 
-- **Linguagem:** PHP 8+
-- **Banco de Dados:** PostgreSQL (Hospedado no Supabase)
-- **Frontend:** HTML5, CSS Nativo Moderno (Design System Próprio com suporte a CSS Variables e Flexbox/Grid), Bootstrap (auxiliar), e Phosphor Icons.
-- **Infraestrutura:** Deploy Contínuo configurado na plataforma **Render**, garantindo escalabilidade e forçamento de conexões criptografadas (HTTPS).
+- **Back-end:** PHP 8.2+ (Arquitetura MVC própria, `bramus/router`, `vlucas/phpdotenv`)
+- **Banco de Dados:** SQLite 3 (com `Foreign Keys`, modo concorrente `WAL` e auto-inicialização via [`database.sql`](database.sql))
+- **Front-end:** HTML5, CSS3 Custom Properties (com **Modo Escuro** completo e responsividade mobile App-Like), Bootstrap 5, Chart.js, SweetAlert2, Phosphor Icons e PWA (`manifest.json` + Service Worker).
+- **Infraestrutura:** Containerizado via [`Dockerfile`](Dockerfile) (`php:8.2-apache`) pronto para deploy contínuo no **Render**.
 
-## Como Rodar o Projeto Localmente
+## Como Executar Localmente
 
-1. Clone o repositório.
-2. Certifique-se de possuir o PHP instalado na máquina (versão >= 8.1).
-3. Execute o comando `composer install` para baixar o roteador (`bramus/router`) e utilitários (`vlucas/phpdotenv`).
-4. Duplique o arquivo `.env.example` para `.env` e preencha as variáveis de ambiente com os dados do seu banco de dados Supabase local ou remoto.
-5. Inicie o servidor PHP embutido na raiz do projeto (ou na pasta public caso seu roteador exija):
-```bash
-php -S localhost:8000 -t public
-```
-6. Acesse via `http://localhost:8000`.
+1. Instale as dependências com Composer:
+   ```bash
+   composer install
+   ```
+2. (Opcional) Copie `.env.example` para `.env` e defina sua `APP_KEY`.
+3. Inicie o servidor embutido apontando para `public/`:
+   ```bash
+   php -S localhost:8000 -t public
+   ```
+4. Acesse `http://localhost:8000`. Na primeira execução, o banco `database.sqlite` será criado automaticamente.
+   - **Credencial padrão de homologação (TCC):** Usuário `admin` | Senha `admin123`.
 
 ---
 *Projeto desenvolvido como Trabalho de Conclusão de Curso (TCC).*

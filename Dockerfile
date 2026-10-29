@@ -23,12 +23,13 @@ COPY . /var/www/html/
 # Instalar dependências do Composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Mudar o DocumentRoot do Apache para a pasta public/
+# Configurar fuso horário padrão (Brasília) e DocumentRoot do Apache para a pasta public/
+ENV TZ=America/Sao_Paulo
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Ajustar permissões para permitir escrita do SQLite no diretório
+# Ajustar permissões para permitir escrita do SQLite (e arquivos -wal/-shm) no diretório
 RUN chown -R www-data:www-data /var/www/html && chmod -R 775 /var/www/html
 
 EXPOSE 80

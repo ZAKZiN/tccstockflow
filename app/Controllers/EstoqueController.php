@@ -3,46 +3,58 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Database;
+use App\Helpers\AuditHelper;
 use App\Models\Produto;
+use PDO;
 
 class EstoqueController extends Controller {
     
     public function index() {
-        if (!isset($_SESSION['usuario_id'])) {
-            $this->redirect('/dashboard');
-        }
-        
+        $db = Database::getConnection();
         $produtos = Produto::getAll();
+        $categorias = $db->query("SELECT * FROM categorias ORDER BY nome_categoria ASC")->fetchAll(PDO::FETCH_ASSOC);
         
         if (isset($_GET['export']) && $_GET['export'] === 'csv') {
             header('Content-Type: text/csv; charset=utf-8');
             header('Content-Disposition: attachment; filename=estoque_export.csv');
             $output = fopen('php://output', 'w');
-            fputs($output, "\xEF\xBB\xBF"); // BOM for Excel
-            fputcsv($output, ['ID', 'Produto', 'Qtd Atual', 'Estoque Minimo', 'Atualizado Em'], ';');
+            fputs($output, "\xEF\xBB\xBF");
+            fputcsv($output, ['ID', 'Produto', 'Categoria', 'Cod. Barras', 'Qtd Atual', 'Estoque Minimo', 'Preco Custo', 'Preco Venda', 'Lote', 'Validade', 'Atualizado Em'], ';', '"', '');
             foreach ($produtos as $p) {
-                fputcsv($output, [$p['id_produto'], $p['nome_produto'], $p['quantidade_estoque'], $p['estoque_minimo'], date('d/m/Y H:i', strtotime($p['atualizado_em']))], ';');
+                fputcsv($output, $this->sanitizeCsvRow([
+                    $p['id_produto'],
+                    $p['nome_produto'],
+                    $p['nome_categoria'] ?? '-',
+                    $p['codigo_barras'] ?? '',
+                    $p['quantidade_estoque'],
+                    $p['estoque_minimo'],
+                    number_format((float)$p['preco_custo'], 2, ',', '.'),
+                    number_format((float)$p['preco_venda'], 2, ',', '.'),
+                    $p['lote'] ?? '',
+                    !empty($p['data_validade']) ? date('d/m/Y', strtotime($p['data_validade'])) : '',
+                    date('d/m/Y H:i', strtotime($p['atualizado_em']))
+                ]), ';', '"', '');
             }
             fclose($output);
             exit;
         }
         
-        $this->view('estoque/index', ['produtos' => $produtos]);
+        $this->view('estoque/index', [
+            'produtos' => $produtos,
+            'categorias' => $categorias
+        ]);
     }
     
     public function historico($id) {
-        if (!isset($_SESSION['usuario_id'])) {
-            $this->redirect('/dashboard');
-        }
-        
-        $db = \App\Core\Database::getConnection();
+        $db = Database::getConnection();
         
         $stmtProd = $db->prepare("SELECT * FROM produtos WHERE id_produto = ?");
-        $stmtProd->execute([$id]);
-        $produto = $stmtProd->fetch(\PDO::FETCH_ASSOC);
+        $stmtProd->execute([(int)$id]);
+        $produto = $stmtProd->fetch(PDO::FETCH_ASSOC);
         
         if (!$produto) {
-            $this->redirect('/estoque');
+            $this->redirect('/estoque?error=' . urlencode('Produto não encontrado.'));
         }
         
         $sql = "
@@ -50,11 +62,11 @@ class EstoqueController extends Controller {
             FROM movimentacoes_estoque m
             LEFT JOIN usuarios u ON m.id_usuario = u.id_usuario
             WHERE m.id_produto = ?
-            ORDER BY m.data_movimentacao DESC
+            ORDER BY m.id_movimentacao DESC
         ";
         $stmtMov = $db->prepare($sql);
-        $stmtMov->execute([$id]);
-        $movimentacoes = $stmtMov->fetchAll(\PDO::FETCH_ASSOC);
+        $stmtMov->execute([(int)$id]);
+        $movimentacoes = $stmtMov->fetchAll(PDO::FETCH_ASSOC);
         
         $this->view('estoque/historico', [
             'produto' => $produto,
@@ -63,108 +75,151 @@ class EstoqueController extends Controller {
     }
     
     public function ajustar() {
-        if (!isset($_SESSION['usuario_id'])) {
-            $this->redirect('/dashboard');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/estoque');
+        }
+
+        $idProduto = (int)($_POST['id_produto'] ?? 0);
+        $tipo = $_POST['tipo'] ?? '';
+        $quantidade = round(floatval(str_replace(',', '.', $_POST['quantidade'] ?? '0')), 3);
+        $observacao = trim($_POST['observacao'] ?? '');
+        $idUsuario = (int)$_SESSION['usuario_id'];
+
+        if ($idProduto <= 0 || $quantidade <= 0 || !in_array($tipo, ['Entrada', 'Saída', 'Transferência'], true) || $observacao === '') {
+            $this->redirect('/estoque/historico/' . $idProduto . '?error=' . urlencode('Informe um tipo válido, quantidade positiva e motivo do ajuste.'));
         }
         
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $idProduto = $_POST['id_produto'];
-            $tipo = $_POST['tipo']; // 'Entrada' ou 'Transferência'
-            $quantidade = (int)$_POST['quantidade'];
-            $observacao = $_POST['observacao'];
-            $idUsuario = $_SESSION['usuario_id'];
+        $db = Database::getConnection();
+        
+        try {
+            $db->beginTransaction();
             
-            if ($quantidade <= 0) {
-                $this->redirect('/estoque'); // Quantidade inválida
-                return;
+            $stmtCheck = $db->prepare("SELECT nome_produto, quantidade_estoque FROM produtos WHERE id_produto = ?");
+            $stmtCheck->execute([$idProduto]);
+            $prod = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+            if (!$prod) {
+                throw new \Exception("Produto não encontrado.");
             }
-            
-            $db = \App\Core\Database::getConnection();
-            
-            try {
-                $db->beginTransaction();
-                
-                // Atualizar Estoque
-                $sinal = ($tipo === 'Entrada') ? '+' : '-';
-                if ($tipo === 'Transferência' || $tipo === 'Saída') { 
-                    $sinal = '-';
-                    // Check if stock is sufficient
-                    $stmtCheck = $db->prepare("SELECT quantidade_estoque FROM produtos WHERE id_produto = ?");
-                    $stmtCheck->execute([$idProduto]);
-                    $qtdAtual = $stmtCheck->fetchColumn();
-                    if ($qtdAtual < $quantidade) {
-                        throw new \Exception("Estoque insuficiente para a operação. (Atual: {$qtdAtual})");
-                    }
+
+            $qtdAtual = (float)$prod['quantidade_estoque'];
+            if ($tipo === 'Entrada') {
+                $novaQtd = round($qtdAtual + $quantidade, 3);
+            } else {
+                if ($qtdAtual < $quantidade) {
+                    throw new \Exception("Estoque insuficiente para a saída. Saldo atual: {$qtdAtual}.");
                 }
-                
-                $sqlEstoque = "UPDATE produtos SET quantidade_estoque = quantidade_estoque $sinal ? WHERE id_produto = ?";
-                $stmtEstq = $db->prepare($sqlEstoque);
-                $stmtEstq->execute([$quantidade, $idProduto]);
-                
-                // Registrar Kardex
-                $sqlMov = "INSERT INTO movimentacoes_estoque (id_produto, id_usuario, tipo, quantidade, observacao) VALUES (?, ?, ?, ?, ?)";
-                $stmtMov = $db->prepare($sqlMov);
-                $stmtMov->execute([$idProduto, $idUsuario, $tipo, $quantidade, $observacao]);
-                
-                $db->commit();
-            } catch (\Exception $e) {
-                $db->rollBack();
+                $novaQtd = round($qtdAtual - $quantidade, 3);
             }
             
-            $this->redirect('/estoque/historico/' . $idProduto);
+            $stmtEstq = $db->prepare("UPDATE produtos SET quantidade_estoque = ?, atualizado_em = ? WHERE id_produto = ?");
+            $stmtEstq->execute([$novaQtd, date('Y-m-d H:i:s'), $idProduto]);
+            
+            $sqlMov = "INSERT INTO movimentacoes_estoque (id_produto, id_usuario, tipo, quantidade, observacao, data_movimentacao) VALUES (?, ?, ?, ?, ?, ?)";
+            $stmtMov = $db->prepare($sqlMov);
+            $stmtMov->execute([$idProduto, $idUsuario, $tipo, $quantidade, $observacao, date('Y-m-d H:i:s')]);
+            
+            $db->commit();
+            AuditHelper::log('produtos', $idProduto, 'AJUSTE_KARDEX', "{$tipo} manual de {$quantidade} un. em '{$prod['nome_produto']}' ({$observacao})");
+            $this->redirect('/estoque/historico/' . $idProduto . '?success=' . urlencode('Ajuste de estoque registrado com sucesso!'));
+        } catch (\Exception $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            $this->redirect('/estoque/historico/' . $idProduto . '?error=' . urlencode($e->getMessage()));
         }
     }
+
     public function store() {
-        if (!isset($_SESSION['usuario_id'])) {
-            $this->redirect('/dashboard');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/estoque');
         }
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $codigoBarras = trim($_POST['codigo_barras'] ?? '');
-            if (empty($codigoBarras)) {
-                $codigoBarras = 'CB' . strtoupper(substr(uniqid(), -8));
-            }
 
-            $qtdInicial = (int)($_POST['quantidade_estoque'] ?? 0);
+        $nomeProduto = trim($_POST['nome_produto'] ?? '');
+        if ($nomeProduto === '') {
+            $this->redirect('/estoque?error=' . urlencode('O nome do produto é obrigatório.'));
+        }
 
-            $dados = [
-                'nome_produto' => $_POST['nome_produto'] ?? '',
-                'codigo_barras' => $codigoBarras,
-                'sku' => 'SKU' . strtoupper(substr(uniqid(), -8)),
-                'id_categoria' => !empty($_POST['id_categoria']) ? $_POST['id_categoria'] : null,
-                'preco_custo' => !empty($_POST['preco_custo']) ? $_POST['preco_custo'] : 0,
-                'preco_venda' => !empty($_POST['preco_venda']) ? $_POST['preco_venda'] : 0,
-                'quantidade_estoque' => $qtdInicial,
-                'estoque_minimo' => !empty($_POST['estoque_minimo']) ? $_POST['estoque_minimo'] : 0,
-                'lote' => null,
-                'data_validade' => !empty($_POST['data_validade']) ? $_POST['data_validade'] : null
-            ];
-            try {
-                $idProduto = Produto::create($dados);
-                if ($idProduto && $qtdInicial > 0) {
-                    $db = \App\Core\Database::getConnection();
-                    $stmtMov = $db->prepare("INSERT INTO movimentacoes_estoque (id_produto, id_usuario, tipo, quantidade, observacao) VALUES (?, ?, 'Entrada', ?, 'Saldo Inicial (Cadastro)')");
-                    $stmtMov->execute([$idProduto, $_SESSION['usuario_id'], $qtdInicial]);
-                }
-                $this->redirect('/estoque');
-            } catch (\Exception $e) {
-                $errorMsg = $e->getMessage();
-                if (strpos($errorMsg, 'UNIQUE constraint failed: produtos.codigo_barras') !== false) {
-                    $errorMsg = "Já existe um produto cadastrado com este Código de Barras.";
-                }
-                $this->redirect('/estoque?error=' . urlencode('Erro ao cadastrar produto: ' . $errorMsg));
+        $codigoBarras = trim($_POST['codigo_barras'] ?? '');
+        if ($codigoBarras === '') {
+            $codigoBarras = 'CB' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
+        }
+
+        $qtdInicial = max(0, round(floatval(str_replace(',', '.', $_POST['quantidade_estoque'] ?? '0')), 3));
+        $precoCusto = max(0, round(floatval(str_replace(',', '.', $_POST['preco_custo'] ?? '0')), 2));
+        $precoVenda = max(0, round(floatval(str_replace(',', '.', $_POST['preco_venda'] ?? '0')), 2));
+        $estoqueMinimo = max(0, round(floatval(str_replace(',', '.', $_POST['estoque_minimo'] ?? '5')), 3));
+
+        $dados = [
+            'nome_produto' => $nomeProduto,
+            'codigo_barras' => $codigoBarras,
+            'sku' => 'SKU' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8)),
+            'id_categoria' => !empty($_POST['id_categoria']) ? (int)$_POST['id_categoria'] : null,
+            'preco_custo' => $precoCusto,
+            'preco_venda' => $precoVenda,
+            'quantidade_estoque' => $qtdInicial,
+            'estoque_minimo' => $estoqueMinimo,
+            'lote' => !empty($_POST['lote']) ? trim($_POST['lote']) : null,
+            'data_validade' => !empty($_POST['data_validade']) ? $_POST['data_validade'] : null
+        ];
+
+        try {
+            $idProduto = Produto::create($dados);
+            if ($idProduto && $qtdInicial > 0) {
+                $db = Database::getConnection();
+                $stmtMov = $db->prepare("INSERT INTO movimentacoes_estoque (id_produto, id_usuario, tipo, quantidade, observacao, data_movimentacao) VALUES (?, ?, 'Entrada', ?, 'Saldo Inicial (Cadastro)', ?)");
+                $stmtMov->execute([$idProduto, $_SESSION['usuario_id'], $qtdInicial, date('Y-m-d H:i:s')]);
             }
+            AuditHelper::log('produtos', (int)$idProduto, 'CRIAR_PRODUTO', "Produto '{$nomeProduto}' cadastrado (Saldo inicial: {$qtdInicial})");
+            $this->redirect('/estoque?success=' . urlencode('Produto cadastrado com sucesso!'));
+        } catch (\Exception $e) {
+            error_log('Erro ao cadastrar produto: ' . $e->getMessage());
+            $msg = 'Não foi possível cadastrar o produto.';
+            if (strpos($e->getMessage(), 'produtos.codigo_barras') !== false) {
+                $msg = 'Já existe um produto cadastrado com este Código de Barras.';
+            }
+            $this->redirect('/estoque?error=' . urlencode($msg));
+        }
+    }
+
+    public function update() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/estoque');
+        }
+
+        $idProduto = (int)($_POST['id_produto'] ?? 0);
+        $nomeProduto = trim($_POST['nome_produto'] ?? '');
+        $codigoBarras = trim($_POST['codigo_barras'] ?? '');
+
+        if ($idProduto <= 0 || $nomeProduto === '' || $codigoBarras === '') {
+            $this->redirect('/estoque?error=' . urlencode('Preencha os dados obrigatórios do produto.'));
+        }
+
+        $dados = [
+            'nome_produto' => $nomeProduto,
+            'codigo_barras' => $codigoBarras,
+            'id_categoria' => !empty($_POST['id_categoria']) ? (int)$_POST['id_categoria'] : null,
+            'preco_custo' => max(0, round(floatval(str_replace(',', '.', $_POST['preco_custo'] ?? '0')), 2)),
+            'preco_venda' => max(0, round(floatval(str_replace(',', '.', $_POST['preco_venda'] ?? '0')), 2)),
+            'estoque_minimo' => max(0, round(floatval(str_replace(',', '.', $_POST['estoque_minimo'] ?? '5')), 3)),
+            'lote' => !empty($_POST['lote']) ? trim($_POST['lote']) : null,
+            'data_validade' => !empty($_POST['data_validade']) ? $_POST['data_validade'] : null
+        ];
+
+        try {
+            Produto::update($idProduto, $dados);
+            AuditHelper::log('produtos', $idProduto, 'EDITAR_PRODUTO', "Dados cadastrais do produto '{$nomeProduto}' atualizados");
+            $this->redirect('/estoque?success=' . urlencode('Produto atualizado com sucesso!'));
+        } catch (\Exception $e) {
+            error_log('Erro ao editar produto: ' . $e->getMessage());
+            $msg = strpos($e->getMessage(), 'produtos.codigo_barras') !== false
+                ? 'Código de barras já utilizado por outro produto.'
+                : 'Não foi possível atualizar o produto.';
+            $this->redirect('/estoque?error=' . urlencode($msg));
         }
     }
 
     public function curvaAbc() {
-        if (!isset($_SESSION['usuario_id'])) {
-            $this->redirect('/dashboard');
-        }
+        $db = Database::getConnection();
         
-        $db = \App\Core\Database::getConnection();
-        
-        // SQL para somar a receita por produto
         $sql = "
             SELECT 
                 p.id_produto,
@@ -175,24 +230,22 @@ class EstoqueController extends Controller {
             JOIN vendas_itens vi ON p.id_produto = vi.id_produto
             JOIN vendas v ON vi.id_venda = v.id_venda
             WHERE v.status = 'Concluída'
-            GROUP BY p.id_produto
+            GROUP BY p.id_produto, p.nome_produto
             ORDER BY receita_total DESC
         ";
         
         $stmt = $db->query($sql);
-        $produtos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Calcula o total geral de receita
         $receitaGeral = array_sum(array_column($produtos, 'receita_total'));
         
-        // Classifica em A, B e C
         $acumulado = 0;
         foreach ($produtos as &$prod) {
             $prod['percentual'] = $receitaGeral > 0 ? ($prod['receita_total'] / $receitaGeral) * 100 : 0;
             $acumulado += $prod['percentual'];
-            $prod['percentual_acumulado'] = $acumulado;
+            $prod['percentual_acumulado'] = min(100, $acumulado);
             
-            if ($acumulado <= 80) {
+            if ($acumulado <= 80 || count($produtos) === 1) {
                 $prod['curva'] = 'A';
             } elseif ($acumulado <= 95) {
                 $prod['curva'] = 'B';
@@ -200,6 +253,7 @@ class EstoqueController extends Controller {
                 $prod['curva'] = 'C';
             }
         }
+        unset($prod);
         
         $this->view('estoque/curva_abc', [
             'produtos' => $produtos,

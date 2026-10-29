@@ -1,25 +1,25 @@
 <?php include __DIR__ . '/../layouts/header.php'; ?>
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom animate-fade-up">
-    <h1 class="h2">Análise Curva ABC</h1>
-</div>
+<header class="topbar animate-fade-up">
+    <h2><i class="ph ph-chart-line-up"></i> Análise Curva ABC (Pareto)</h2>
+</header>
 
 <div class="glass-panel animate-fade-up delay-100" style="padding: 1.5rem; margin-bottom: 2rem;">
-    <p class="text-muted">
-        A <strong>Curva ABC</strong> classifica seus produtos com base no impacto real no faturamento total (R$ <?= number_format($receitaGeral, 2, ',', '.') ?>).<br>
-        <span class="badge" style="background-color: var(--success); color: white;">Curva A (80%)</span> Itens mais importantes. Não deixe faltar no estoque.<br>
-        <span class="badge" style="background-color: var(--warning); color: black;">Curva B (15%)</span> Itens de média importância.<br>
-        <span class="badge" style="background-color: var(--danger); color: white;">Curva C (5%)</span> Itens que geram pouco faturamento relativo.
+    <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.25rem;">
+        A <strong>Curva ABC</strong> classifica os itens conforme sua representatividade no faturamento acumulado (<strong style="color: var(--text-primary);">R$ <?= number_format((float)$receitaGeral, 2, ',', '.') ?></strong>):<br>
+        <span class="badge badge-success">Curva A (até 80%)</span> Produtos vitais de alto giro/receita •
+        <span class="badge badge-warning">Curva B (80% a 95%)</span> Importância intermediária •
+        <span class="badge badge-danger">Curva C (95% a 100%)</span> Menor impacto financeiro relativo.
     </p>
 
-    <div class="table-responsive mt-4">
-        <table class="table table-hover align-middle">
+    <div class="table-container">
+        <table>
             <thead>
                 <tr>
-                    <th>Classificação</th>
+                    <th>Classe</th>
                     <th>Produto</th>
                     <th>Qtd Vendida</th>
-                    <th>Receita Total</th>
+                    <th>Receita Gerada</th>
                     <th>% da Receita</th>
                     <th>% Acumulado</th>
                 </tr>
@@ -27,35 +27,33 @@
             <tbody>
                 <?php if(empty($produtos)): ?>
                     <tr>
-                        <td colspan="6" class="text-center py-4">Nenhuma venda registrada para calcular a curva ABC.</td>
+                        <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-secondary);">Nenhuma venda concluída registrada para calcular a Curva ABC.</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach($produtos as $p): ?>
                         <?php
-                            $bg = '';
-                            $color = '';
-                            if ($p['curva'] === 'A') { $bg = 'var(--success-bg)'; $color = 'var(--success)'; }
-                            elseif ($p['curva'] === 'B') { $bg = 'var(--warning-bg)'; $color = 'var(--warning)'; }
-                            else { $bg = 'var(--danger-bg)'; $color = 'var(--danger)'; }
+                            if ($p['curva'] === 'A') { $badge = 'badge-success'; $barColor = 'var(--success)'; }
+                            elseif ($p['curva'] === 'B') { $badge = 'badge-warning'; $barColor = 'var(--warning)'; }
+                            else { $badge = 'badge-danger'; $barColor = 'var(--danger)'; }
                         ?>
                         <tr>
                             <td>
-                                <span class="badge" style="background-color: <?= $bg ?>; color: <?= $color ?>; font-size: 1rem; padding: 0.4em 0.8em;">
-                                    <?= $p['curva'] ?>
+                                <span class="badge <?= $badge ?>" style="font-size: 0.9rem; padding: 0.35em 0.8em;">
+                                    <?= htmlspecialchars($p['curva']) ?>
                                 </span>
                             </td>
-                            <td class="fw-bold" style="color: var(--text-primary);"><?= htmlspecialchars($p['nome_produto']) ?></td>
-                            <td><?= $p['total_vendido'] ?></td>
-                            <td class="fw-bold" style="color: var(--text-primary);">R$ <?= number_format($p['receita_total'], 2, ',', '.') ?></td>
+                            <td style="font-weight: 600; color: var(--text-primary);"><?= htmlspecialchars($p['nome_produto']) ?></td>
+                            <td><?= rtrim(rtrim(number_format((float)$p['total_vendido'], 3, ',', '.'), '0'), ',') ?></td>
+                            <td style="font-weight: 600; color: var(--text-primary);">R$ <?= number_format((float)$p['receita_total'], 2, ',', '.') ?></td>
                             <td>
-                                <div class="d-flex align-items-center">
-                                    <span class="me-2"><?= number_format($p['percentual'], 2, ',', '.') ?>%</span>
-                                    <div class="progress" style="height: 6px; width: 100px; flex-grow: 1;">
-                                        <div class="progress-bar" role="progressbar" style="width: <?= $p['percentual'] ?>%; background-color: <?= $color ?>;"></div>
+                                <div class="d-flex align-items-center" style="min-width: 140px;">
+                                    <span class="me-2"><?= number_format((float)$p['percentual'], 2, ',', '.') ?>%</span>
+                                    <div class="progress" style="height: 6px; width: 90px; flex-grow: 1; background-color: var(--bg-secondary);">
+                                        <div class="progress-bar" role="progressbar" style="width: <?= min(100, (float)$p['percentual']) ?>%; background-color: <?= $barColor ?>;"></div>
                                     </div>
                                 </div>
                             </td>
-                            <td><?= number_format($p['percentual_acumulado'], 2, ',', '.') ?>%</td>
+                            <td><?= number_format((float)$p['percentual_acumulado'], 2, ',', '.') ?>%</td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>

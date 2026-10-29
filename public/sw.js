@@ -1,31 +1,28 @@
-const CACHE_NAME = 'stockflow-v3';
-const urlsToCache = [
+const CACHE_NAME = 'stockflow-v4';
+const STATIC_ASSETS = [
   '/css/style.css',
   '/css/dark-mode.css',
-  '/manifest.json'
+  '/js/notifications.js',
+  '/manifest.json',
+  '/icon.svg'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
   );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys().then(cacheNames =>
+      Promise.all(
+        cacheNames
+          .filter(name => name !== CACHE_NAME)
+          .map(name => caches.delete(name))
+      )
+    )
   );
   self.clients.claim();
 });
@@ -33,17 +30,21 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
-  if (event.request.mode === 'navigate') {
+  const url = new URL(event.request.url);
+  // Só faz cache de arquivos estáticos locais; ignora navegações, APIs e CDNs externos
+  if (url.origin !== self.location.origin || event.request.mode === 'navigate' || url.pathname.startsWith('/api/')) {
     return;
   }
 
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        return response || fetch(event.request);
+    fetch(event.request)
+      .then(networkResp => {
+        if (networkResp && networkResp.status === 200) {
+          const clone = networkResp.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
+        return networkResp;
       })
-      .catch(() => {
-        return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
-      })
+      .catch(() => caches.match(event.request))
   );
 });
