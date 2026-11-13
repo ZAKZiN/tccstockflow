@@ -21,7 +21,13 @@ else
     exit 1
 fi
 
-# 2. Inicia servidor PHP em segundo plano na porta 8000
+# 2. Inicializa o banco com dados de demonstracao caso nao exista
+if [ ! -f "database.sqlite" ]; then
+    echo "[INFO] Banco local novo detectado. Carregando dados de demonstracao..."
+    php seed_demo.php
+fi
+
+# 3. Inicia servidor PHP em segundo plano na porta 8000
 echo "[1/2] Iniciando servidor local na porta 8000..."
 php -S 0.0.0.0:8000 -t public > /dev/null 2>&1 &
 PHP_PID=$!
@@ -30,7 +36,7 @@ trap "kill $PHP_PID 2>/dev/null; exit" SIGINT SIGTERM EXIT
 
 sleep 1
 
-# 3. Se tiver cloudflared instalado no Mac, cria o túnel HTTPS
+# 4. Se tiver cloudflared instalado no Mac, cria o túnel HTTPS
 if command -v cloudflared >/dev/null 2>&1; then
     echo "[2/2] Criando tunel HTTPS seguro Cloudflare..."
     echo ""
@@ -55,3 +61,4 @@ else
     open "http://localhost:8000" >/dev/null 2>&1 &
     wait $PHP_PID
 fi
+
