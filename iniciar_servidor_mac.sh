@@ -29,12 +29,18 @@ fi
 
 # 3. Inicia servidor PHP em segundo plano na porta 8000
 echo "[1/2] Iniciando servidor local na porta 8000..."
-php -S 0.0.0.0:8000 -t public > /dev/null 2>&1 &
+php -d display_errors=1 -S 0.0.0.0:8000 -t public > /tmp/stockflow_php.log 2>&1 &
 PHP_PID=$!
 
 trap "kill $PHP_PID 2>/dev/null; exit" SIGINT SIGTERM EXIT
 
 sleep 1
+
+if ! kill -0 $PHP_PID 2>/dev/null; then
+    echo "[ERRO] O servidor PHP nao conseguiu iniciar. Detalhes:"
+    cat /tmp/stockflow_php.log
+    exit 1
+fi
 
 # 4. Se tiver cloudflared instalado no Mac, cria o túnel HTTPS
 if command -v cloudflared >/dev/null 2>&1; then

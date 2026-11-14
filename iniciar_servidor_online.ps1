@@ -105,3 +105,4 @@ try {
     if ($cfProcess -and -not $cfProcess.HasExited) { Stop-Process -Id $cfProcess.Id -Force -ErrorAction SilentlyContinue }
     Write-Host "Servidor finalizado." -ForegroundColor Green
 }
+

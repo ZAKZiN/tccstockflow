@@ -3,9 +3,19 @@
 // Fuso horário oficial (Brasília) para consistência entre PHP e SQLite
 date_default_timezone_set('America/Sao_Paulo');
 
-// Cibersegurança: Prevenir vazamento de dados de erros internos (Item 15)
-ini_set('display_errors', '0');
+// Cibersegurança: Prevenir vazamento de erros em produção (Item 15) mas permitir diagnóstico local
+if ((isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'production') || getenv('RENDER')) {
+    ini_set('display_errors', '0');
+} else {
+    ini_set('display_errors', '1');
+}
 ini_set('log_errors', '1');
+
+// Verifica dependências do Composer
+if (!file_exists(__DIR__ . '/../vendor/autoload.php')) {
+    http_response_code(500);
+    die("<h1>Erro de Inicialização</h1><p>Pasta <code>vendor</code> não encontrada. Por favor, atualize o repositório com <code>git pull</code>.</p>");
+}
 
 // Cibersegurança e LGPD: Configuração Segura de Sessões
 $isSecure = false;
